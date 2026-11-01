@@ -13,7 +13,7 @@ choose or configure an engine.
 ## 2. Get the repo
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/michael-borck/enterprise-estate-labs.git
 cd enterprise-estate-labs
 ```
 

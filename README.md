@@ -21,7 +21,7 @@ Install a container runtime once. Docker Desktop and Podman both work; the launc
 finds whichever is installed. See [`modules/module-00-setup/README.md`](modules/module-00-setup/README.md).
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/michael-borck/enterprise-estate-labs.git
 cd enterprise-estate-labs
 ./start.sh m03
 ```

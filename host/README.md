@@ -1,16 +1,54 @@
-# Host VM
+# Host
 
-The container estate is not an operating system installation. ISYS2008 also requires a
-real Ubuntu Server install, so that students select, install and configure an OS rather
-than only run containers.
+The host layer is an Ubuntu container shell, not a virtual machine. The operating-system
+install is a browser simulation. The real host is the container userland you configure
+afterwards.
 
-This folder will hold the reproducible host bootstrap:
+## What is here
 
-- A Multipass profile for a local Ubuntu Server VM (the default).
-- A UTM profile for students who prefer a GUI, including Apple Silicon.
-- A cloud-init file for the first boot.
-- A smoke test that proves the VM is reachable over SSH and has the container runtime
-  installed.
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Builds `cloudcore-host:latest`: Ubuntu 24.04 with `sudo`, common tools and a `student` user |
+| `install-simulation.html` | The browser-based install exercise: release, network, storage, user, SSH and packages |
+| `../start.sh host` | Builds the image on first use and opens the shell |
+| `../start.sh host reset` | Removes the shell and its home volume |
 
-Until that exists, the unit repo owns the host installation instructions and this repo
-assumes a Linux host with Docker or Podman.
+## Why a container, not a VM
+
+A local VM needs a hypervisor that works on macOS Apple Silicon, Windows and Linux. That is
+three paths, or one path with poor Apple Silicon support. A container host avoids the
+hypervisor, runs on lab machines and student laptops, and starts in seconds.
+
+The trade-off is honest: a container shares the host kernel. It has no boot process, no
+partition table and no kernel installation. The simulation covers those decisions. The
+container is the userland where you do the OS work.
+
+## What the host can do
+
+- Install packages with `apt`.
+- Create users and groups, set passwords and configure `sudo`.
+- Inspect processes, memory and disk.
+- Configure permissions and ownership.
+- Use the container network: addresses, routes, ports, DNS and `tcpdump`.
+- Configure files, services and logs.
+
+## What it cannot do
+
+- Install a kernel or bootloader.
+- Partition a real disk.
+- Configure the physical host or its hardware.
+- Run `systemd` as PID 1 in the default container.
+
+The simulation covers the install and boot decisions. The host shell covers the
+configuration work.
+
+## Try it
+
+```bash
+./start.sh host
+```
+
+The default `sudo` password is `cloudcore`. Change it with `passwd`. Your home directory is
+kept in the `cloudcore-host-home` volume.
+
+Open `install-simulation.html` in a browser to walk through the install decisions first.

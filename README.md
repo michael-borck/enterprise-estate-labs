@@ -23,7 +23,8 @@ finds whichever is installed. See [`modules/module-00-setup/README.md`](modules/
 ```bash
 git clone https://github.com/michael-borck/enterprise-estate-labs.git
 cd enterprise-estate-labs
-./start.sh m03
+./start.sh host   # the Ubuntu host shell
+./start.sh m03    # the CloudCore estate
 ```
 
 On Windows, double-click `start.bat` or run it from a terminal.
@@ -32,6 +33,8 @@ The launcher is the front door. You do not choose an engine.
 
 | Command | What it does |
 |---|---|
+| `./start.sh host` | Start the Ubuntu host shell |
+| `./start.sh host reset` | Remove the host shell and its home volume |
 | `./start.sh m03` | Start the Module 03 state: web, db and tools |
 | `./start.sh m06` | Start the cumulative Module 06 state and add the TLS proxy |
 | `./start.sh m09` | Start the cumulative Module 09 state and add the shared volume |
@@ -45,6 +48,12 @@ The launcher is the front door. You do not choose an engine.
 
 Open <https://localhost:8443>. The certificate is issued by a local authority, so the
 browser warning is expected. That warning is part of Module 06.
+
+## The host
+
+The host is an Ubuntu container shell. The operating-system install is a browser
+simulation: open [`host/install-simulation.html`](host/install-simulation.html). The real
+host is the userland you configure with `./start.sh host`.
 
 ## What runs
 
@@ -67,7 +76,7 @@ also brings up Modules 03 and 06. Nothing else runs.
 | 09 | File systems and access control | [`modules/module-09-filesystems/LAB-GUIDE.md`](modules/module-09-filesystems/LAB-GUIDE.md) |
 
 Planned: 04 networking, 05 addressing and naming, 08 identity, 10 storage, 11 security
-and incident response. The host VM bootstrap is planned for `host/`.
+and incident response. The host shell and install simulation are in `host/`.
 
 ## Design
 

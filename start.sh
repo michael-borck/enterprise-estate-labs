@@ -25,9 +25,15 @@
 #   ./start.sh break-m09
 #   ./start.sh smoke
 #   ./start.sh pull
+#   ./start.sh host            start the Ubuntu host shell
+#   ./start.sh host reset      remove the host shell and its home volume
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
+
+# macOS on an external drive leaves AppleDouble files that break Docker build
+# contexts. They are not part of the lab.
+find . -name '._*' -delete 2>/dev/null || true
 
 # --- Pick the engine without asking the student ---------------------------
 if [[ -n "${CONTAINER_ENGINE:-}" ]]; then
@@ -82,6 +88,8 @@ CloudCore estate launcher
   ./start.sh break-m09       put the finance share back into the broken state
   ./start.sh smoke           run the smoke test
   ./start.sh pull            pull the images
+  ./start.sh host            start the Ubuntu host shell
+  ./start.sh host reset      remove the host shell and its home volume
 
 Diagnostics:
   ./start.sh exec <service> <command...>
@@ -214,6 +222,28 @@ case "$cmd" in
 
   smoke)
     CONTAINER_ENGINE="$ENGINE" ./tests/smoke.sh
+    ;;
+
+  host)
+    host_cmd="${1:-}"
+    image="cloudcore-host:latest"
+    if [[ "$host_cmd" == "reset" ]]; then
+      "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
+      "$ENGINE" volume rm cloudcore-host-home >/dev/null 2>&1 || true
+      echo "Host shell reset. The next ./start.sh host starts clean."
+      exit 0
+    fi
+    if ! "$ENGINE" image inspect "$image" >/dev/null 2>&1; then
+      echo "Building the CloudCore host image (first run only)..."
+      "$ENGINE" build -t "$image" -f host/Dockerfile host
+    fi
+    tty_flags=(-i)
+    if [[ -t 0 && -t 1 ]]; then
+      tty_flags=(-it)
+    fi
+    "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
+    "$ENGINE" run --rm "${tty_flags[@]}" --name cloudcore-host --hostname cloudcore-host \
+      -v cloudcore-host-home:/home/student "$image"
     ;;
 
   pull)

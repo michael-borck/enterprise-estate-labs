@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudCore host provisioning simulation</title>
+<style>
+  :root {
+    --bg: #17171b;
+    --panel: #232329;
+    --panel-2: #2d2d34;
+    --ink: #f1f1f4;
+    --muted: #a8a8b4;
+    --line: #3a3a43;
+    --accent: #e95420;
+    --accent-2: #ff7a45;
+    --ok: #7bd88f;
+    --warn: #ffc857;
+    --bad: #ff6b6b;
+    --term: #101014;
+    --radius: 14px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+  button, input { font: inherit; }
+  .app {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: #1d1d22;
+    border-right: 1px solid var(--line);
+    padding: 28px 22px;
+  }
+  .brand {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .brand-mark {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: #fff;
+  }
+  .brand h1 { font-size: 15px; margin: 0; line-height: 1.2; }
+  .brand p { font-size: 12px; color: var(--muted); margin: 3px 0 0; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .step {
+    display: flex; gap: 10px; align-items: center;
+    padding: 8px 10px;
+    border-radius: 9px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .step .num {
+    width: 22px; height: 22px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    flex: 0 0 auto;
+  }
+  .step.active { background: var(--panel-2); color: var(--ink); }
+  .step.active .num { border-color: var(--accent); color: var(--accent); }
+  .step.done .num { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 28px clamp(18px, 4vw, 56px) 34px;
+  }
+  .topline {
+    display: flex; justify-content: space-between; gap: 16px;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  .topline h2 { font-size: clamp(20px, 2.4vw, 28px); margin: 0; }
+  .topline .kicker { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: clamp(18px, 3vw, 32px);
+    max-width: 980px;
+    width: 100%;
+  }
+  h3 { margin: 0 0 8px; font-size: 20px; }
+  .lede { color: var(--muted); margin: 0 0 22px; max-width: 68ch; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .choice {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 14px 16px;
+    background: var(--panel-2);
+    cursor: pointer;
+  }
+  .choice input { margin-right: 8px; accent-color: var(--accent); }
+  .choice strong { display: block; font-size: 14px; }
+  .choice span { color: var(--muted); font-size: 12px; }
+  .field { display: grid; gap: 6px; margin: 14px 0; }
+  .field label { font-size: 13px; color: var(--muted); }
+  .field input[type="text"], .field input[type="password"], .field input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: #17171b;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .field input:focus, .choice:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .field input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .hint { color: var(--muted); font-size: 12px; }
+  .feedback {
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 18px;
+    background: #1b1b20;
+    border: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .feedback p { margin: 0 0 6px; }
+  .feedback p:last-child { margin-bottom: 0; }
+  .feedback .ok { color: var(--ok); }
+  .feedback .warn { color: var(--warn); }
+  .feedback .bad { color: var(--bad); }
+  .footer {
+    display: flex; justify-content: space-between; gap: 12px;
+    margin-top: 24px;
+    max-width: 980px;
+    width: 100%;
+  }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    padding: 10px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn:hover { border-color: #55555f; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.ghost { background: transparent; }
+  .summary { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .summary th, .summary td {
+    text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .summary th { color: var(--muted); font-weight: 600; width: 34%; }
+  .summary code { font-family: var(--mono); font-size: 12px; color: var(--accent-2); }
+  .progress-wrap { margin: 18px 0; }
+  .progress {
+    height: 10px; background: #17171b; border-radius: 99px; overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .progress > span {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .22s linear;
+  }
+  .install-log {
+    background: var(--term);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    min-height: 180px;
+    max-height: 240px;
+    overflow: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #d8d8e0;
+    white-space: pre-wrap;
+  }
+  .install-log .ok { color: var(--ok); }
+  /* Desktop */
+  .desktop {
+    position: relative;
+    min-height: 460px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 20% 20%, #4a2440 0, transparent 40%),
+      radial-gradient(circle at 80% 30%, #243c5a 0, transparent 45%),
+      linear-gradient(145deg, #2a1830, #10141f 65%, #071018);
+  }
+  .desktop-top {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,.42);
+    padding: 9px 14px;
+    font-size: 12px;
+    color: #e8e8ef;
+    backdrop-filter: blur(4px);
+  }
+  .desktop-title { font-weight: 600; }
+  .desktop-icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 96px);
+    gap: 16px;
+    padding: 26px;
+  }
+  .desk-icon {
+    background: transparent;
+    border: 0;
+    color: #fff;
+    display: grid; justify-items: center; gap: 8px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  .desk-icon:hover, .desk-icon:focus { background: rgba(255,255,255,.1); outline: none; }
+  .icon-tile {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.28);
+  }
+  .icon-terminal { background: #111318; color: #7bd88f; border: 1px solid #343846; }
+  .icon-files { background: #3a2a12; color: #ffc857; border: 1px solid #5a431c; }
+  .icon-settings { background: #1c2a3a; color: #8fc7ff; border: 1px solid #2e4560; }
+  .desktop-note {
+    position: absolute; left: 26px; bottom: 20px; right: 26px;
+    color: #d9d9e4; font-size: 12px;
+  }
+  .term-window {
+    background: var(--term);
+    border: 1px solid #34343d;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    overflow: hidden;
+  }
+  .term-bar {
+    display: flex; gap: 7px; align-items: center;
+    padding: 9px 12px;
+    background: #1b1b21;
+    border-bottom: 1px solid #2c2c34;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .term-title { margin-left: 8px; color: #b9b9c6; font-size: 12px; font-family: var(--mono); }
+  .term-body {
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #e6e6ee;
+    white-space: pre-wrap;
+    line-height: 1.65;
+  }
+  .term-body .prompt { color: #7bd88f; }
+  .term-body .comment { color: #8c8c9a; }
+  .term-body .cmd { color: #ffd479; }
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(6,6,10,.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    width: min(760px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .modal-head h3 { margin: 0; font-size: 16px; }
+  .small { font-size: 12px; color: var(--muted); }
+  @media (max-width: 820px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 18px; }
+    .steps { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+    .step { font-size: 12px; padding: 6px 8px; }
+    .main { padding: 20px 14px 28px; }
+    .topline { flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CC</div>
+      <div>
+        <h1>CloudCore host</h1>
+        <p>Provisioning simulation</p>
+      </div>
+    </div>
+    <ol class="steps" id="steps"></ol>
+  </aside>
+
+  <main class="main">
+    <div class="topline">
+      <div>
+        <div class="kicker">Ubuntu Server install</div>
+        <h2 id="step-title">Choose the release</h2>
+      </div>
+      <div class="small" id="step-count">Step 1 of 9</div>
+    </div>
+
+    <section class="panel">
+      <div id="step-body"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+    </section>
+
+    <div class="footer">
+      <button class="btn ghost" id="back">Back</button>
+      <button class="btn primary" id="next">Next</button>
+    </div>
+  </main>
+</div>
+
+<div class="modal" id="terminal-modal" role="dialog" aria-modal="true" aria-labelledby="terminal-title">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="terminal-title">Terminal</h3>
+      <button class="btn ghost" id="close-terminal">Close</button>
+    </div>
+    <p class="lede">The simulation ends here. These are the real commands for your machine.</p>
+    <div class="term-window">
+      <div class="term-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">student@cloudcore-host: ~</span>
+      </div>
+      <div class="term-body" id="terminal-commands"></div>
+    </div>
+    <div class="footer" style="margin-top:16px">
+      <button class="btn" id="copy-commands">Copy commands</button>
+      <button class="btn" id="download-record-2">Download build record</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const steps = [
+    { id: 'release',  label: 'Release' },
+    { id: 'network',  label: 'Network' },
+    { id: 'storage',  label: 'Storage' },
+    { id: 'user',     label: 'User' },
+    { id: 'ssh',      label: 'SSH' },
+    { id: 'packages', label: 'Packages' },
+    { id: 'review',   label: 'Review' },
+    { id: 'install',  label: 'Install' },
+    { id: 'desktop',  label: 'Desktop' }
+  ];
+
+  const state = {
+    release: 'ubuntu-24.04',
+    hostname: 'cloudcore-host',
+    network: 'dhcp',
+    ip: '10.0.2.15/24',
+    gateway: '10.0.2.2',
+    dns: '10.0.2.3',
+    storage: 'guided',
+    disk: 20,
+    rootSize: 18,
+    swap: 2,
+    fullname: 'CloudCore Student',
+    username: 'student',
+    password: '',
+    confirm: '',
+    ssh: true,
+    packages: 'standard'
+  };
+
+  let current = 0;
+  let installTimer = null;
+  let installProgress = 0;
+  let installDone = false;
+
+  const $ = (id) => document.getElementById(id);
+  const stepsEl = $('steps');
+  const titleEl = $('step-title');
+  const countEl = $('step-count');
+  const bodyEl = $('step-body');
+  const feedbackEl = $('feedback');
+  const backEl = $('back');
+  const nextEl = $('next');
+
+  const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+
+  const releaseLabel = () => ({
+    'ubuntu-24.04': 'Ubuntu Server 24.04 LTS',
+    'ubuntu-22.04': 'Ubuntu Server 22.04 LTS',
+    'ubuntu-25.10': 'Ubuntu Server 25.10'
+  }[state.release] || state.release);
+
+  const partitionTotal = () => Number(state.rootSize || 0) + Number(state.swap || 0);
+
+  function isIPv4(value) {
+    const parts = String(value).split('.');
+    return parts.length === 4 && parts.every((p) => /^\d+$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+  }
+
+  function isCIDR(value) {
+    const [ip, bits] = String(value).split('/');
+    return isIPv4(ip) && /^\d+$/.test(bits) && Number(bits) >= 0 && Number(bits) <= 32;
+  }
+
+  function validateStep(id) {
+    const issues = [];
+    if (id === 'release') {
+      if (state.release === 'ubuntu-25.10') {
+        issues.push({ level: 'warn', text: '25.10 is an interim release with nine months of support. A server should use 24.04 LTS.' });
+      }
+      if (state.release === 'ubuntu-22.04') {
+        issues.push({ level: 'warn', text: '22.04 is still supported, but 24.04 LTS is the current long-term release for a new host.' });
+      }
+      if (state.release === 'ubuntu-24.04') {
+        issues.push({ level: 'ok', text: 'Good. 24.04 LTS is supported until 2029 on the standard cycle.' });
+      }
+    }
+    if (id === 'network') {
+      if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(state.hostname)) {
+        issues.push({ level: 'bad', text: 'The hostname must use lowercase letters, digits and hyphens, and cannot start or end with a hyphen.' });
+      }
+      if (state.network === 'static') {
+        if (!isCIDR(state.ip)) issues.push({ level: 'bad', text: 'The address must be IPv4 with a prefix, for example 10.0.2.15/24.' });
+        if (!isIPv4(state.gateway)) issues.push({ level: 'bad', text: 'The gateway must be a valid IPv4 address.' });
+        if (!isIPv4(state.dns)) issues.push({ level: 'bad', text: 'The DNS server must be a valid IPv4 address.' });
+      } else {
+        issues.push({ level: 'ok', text: 'DHCP is a reasonable default. The host will get an address from the network.' });
+      }
+    }
+    if (id === 'storage') {
+      const disk = Number(state.disk);
+      if (disk < 10) issues.push({ level: 'bad', text: '10 GB is too small for a server with updates, logs and containers. Use at least 20 GB.' });
+      else if (disk < 20) issues.push({ level: 'warn', text: 'This is tight. Updates and container images will fill it quickly.' });
+      if (state.storage === 'manual') {
+        if (Number(state.rootSize) < 10) issues.push({ level: 'bad', text: 'The root partition needs at least 10 GB.' });
+        if (partitionTotal() > disk) issues.push({ level: 'bad', text: 'The partitions add up to more than the disk. Reduce the sizes.' });
+        if (Number(state.swap) < 1) issues.push({ level: 'warn', text: 'No swap is allowed, but a small swap file helps under memory pressure.' });
+      } else {
+        issues.push({ level: 'ok', text: 'Guided partitioning is the safest choice for a first server. The installer uses the whole disk.' });
+      }
+    }
+    if (id === 'user') {
+      if (!/^[a-z][a-z0-9_-]{2,31}$/.test(state.username)) {
+        issues.push({ level: 'bad', text: 'The username must start with a lowercase letter and use 3 to 32 lowercase letters, digits, underscores or hyphens.' });
+      }
+      if (String(state.password).length < 8) {
+        issues.push({ level: 'bad', text: 'Use at least 8 characters. A short password is the first thing an attacker tries.' });
+      }
+      if (['password', '12345678', 'qwerty12', 'cloudcore'].includes(String(state.password).toLowerCase())) {
+        issues.push({ level: 'warn', text: 'This is a common password. The lab default is fine for the container, but choose a better one in a real host.' });
+      }
+      if (state.password !== state.confirm) {
+        issues.push({ level: 'bad', text: 'The passwords do not match.' });
+      }
+    }
+    if (id === 'ssh') {
+      if (!state.ssh) {
+        issues.push({ level: 'warn', text: 'Without SSH you can only use the console. Enable it for a server you will administer remotely.' });
+      } else {
+        issues.push({ level: 'ok', text: 'SSH is the normal way to administer a Linux server. Keep it on.' });
+      }
+    }
+    if (id === 'packages') {
+      if (state.packages === 'minimal') {
+        issues.push({ level: 'warn', text: 'A minimal install is smaller, but you will install the tools you need later. That is fine if you know what you need.' });
+      } else {
+        issues.push({ level: 'ok', text: 'The standard utilities give you the tools for the first labs.' });
+      }
+    }
+    if (id === 'review') {
+      ['release', 'network', 'storage', 'user', 'ssh', 'packages'].forEach((step) => {
+        validateStep(step).forEach((issue) => {
+          if (issue.level === 'bad') issues.push(issue);
+        });
+      });
+      if (!issues.length) issues.push({ level: 'ok', text: 'Everything is ready. Start the install.' });
+    }
+    return issues;
+  }
+
+  function hasErrors(id) {
+    return validateStep(id).some((issue) => issue.level === 'bad');
+  }
+
+  function renderSteps() {
+    stepsEl.innerHTML = steps.map((step, index) => {
+      const cls = index === current ? 'step active' : (index < current ? 'step done' : 'step');
+      return `<li class="${cls}"><span class="num">${index < current ? '&#10003;' : index + 1}</span><span>${esc(step.label)}</span></li>`;
+    }).join('');
+  }
+
+  function releaseChoices() {
+    return `
+      <div class="grid-2">
+        ${[
+          ['ubuntu-24.04', 'Ubuntu Server 24.04 LTS', 'Long-term support. The right default.'],
+          ['ubuntu-22.04', 'Ubuntu Server 22.04 LTS', 'Older LTS. Still supported, but not the new default.'],
+          ['ubuntu-25.10', 'Ubuntu Server 25.10', 'Interim release. Nine months of support.']
+        ].map(([value, title, note]) => `
+          <label class="choice">
+            <input type="radio" name="release" data-key="release" value="${value}" ${state.release === value ? 'checked' : ''}>
+            <strong>${esc(title)}</strong>
+            <span>${esc(note)}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function networkBody() {
+    return `
+      <div class="field">
+        <label for="hostname">Hostname</label>
+        <input id="hostname" data-key="hostname" type="text" value="${esc(state.hostname)}" autocomplete="off" spellcheck="false">
+        <span class="hint">The name this server uses on the network. Lowercase, no spaces.</span>
+      </div>
+      <div class="grid-2">
+        <label class="choice">
+          <input type="radio" name="network" data-key="network" value="dhcp" ${state.network === 'dhcp' ? 'checked' : ''}>
+          <strong>DHCP</strong>
+          <span>The network assigns the address. The default for a lab.</span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="network" data-key="network" value="static" ${state.network === 'static' ? 'checked' : ''}>
+          <strong>Static address</strong>
+          <span>You choose the address, gateway and DNS.</span>
+        </label>
+      </div>
+      ${state.network === 'static' ? `
+        <div class="field">
+          <label for="ip">Address and prefix</label>
+          <input id="ip" data-key="ip" type="text" value="${esc(state.ip)}" placeholder="10.0.2.15/24">
+        </div>
+        <div class="field">
+          <label for="gateway">Gateway</label>
+          <input id="gateway" data-key="gateway" type="text" value="${esc(state.gateway)}" placeholder="10.0.2.2">
+        </div>
+        <div class="field">
+          <label for="dns">DNS server</label>
+          <input id="dns" data-key="dns" type="text" value="${esc(state.dns)}" placeholder="10.0.2.3">
+        </div>
+      ` : ''}
+    `;
+  }
+
+  function storageBody() {
+    return `
+      <div class="field">
+        <label for="disk">Disk size (GB)</label>
+        <input id="disk" data-key="disk" type="number" min="10" max="80" step="1" value="${esc(state.disk)}">
+        <span class="hint">A small server is fine. 20 GB leaves room for updates and images.</span>
+      </div>
+      <div class="grid-2">
+        <label class="choice">
+          <input type="radio" name="storage" data-key="storage" value="guided" ${state.storage === 'guided' ? 'checked' : ''}>
+          <strong>Guided, use the whole disk</strong>
+          <span>The installer creates the partitions. The safest first choice.</span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="storage" data-key="storage" value="manual" ${state.storage === 'manual' ? 'checked' : ''}>
+          <strong>Manual</strong>
+          <span>Choose the root and swap sizes yourself.</span>
+        </label>
+      </div>
+      ${state.storage === 'manual' ? `
+        <div class="field">
+          <label for="rootSize">Root partition (GB)</label>
+          <input id="rootSize" data-key="rootSize" type="number" min="10" max="80" step="1" value="${esc(state.rootSize)}">
+        </div>
+        <div class="field">
+          <label for="swap">Swap (GB)</label>
+          <input id="swap" data-key="swap" type="number" min="0" max="16" step="1" value="${esc(state.swap)}">
+        </div>
+        <p class="hint" id="storage-preview">Using ${partitionTotal()} GB of ${state.disk} GB.</p>
+      ` : ''}
+    `;
+  }
+
+  function userBody() {
+    return `
+      <div class="field">
+        <label for="fullname">Full name</label>
+        <input id="fullname" data-key="fullname" type="text" value="${esc(state.fullname)}">
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" data-key="username" type="text" value="${esc(state.username)}" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" data-key="password" type="password" value="${esc(state.password)}" autocomplete="new-password">
+        <span class="hint">The simulation does not store this. The container default is <code>cloudcore</code>.</span>
+      </div>
+      <div class="field">
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" data-key="confirm" type="password" value="${esc(state.confirm)}" autocomplete="new-password">
+      </div>
+    `;
+  }
+
+  function sshBody() {
+    return `
+      <label class="choice">
+        <input type="checkbox" data-key="ssh" ${state.ssh ? 'checked' : ''}>
+        <strong>Install OpenSSH server</strong>
+        <span>Lets you administer the host remotely. The normal choice for a server.</span>
+      </label>
+      <p class="hint" style="margin-top:14px">If you enable SSH, you can copy your public key in later with <code>ssh-copy-id</code>. The container host in this unit uses a password by default.</p>
+    `;
+  }
+
+  function packagesBody() {
+    return `
+      <div class="grid-2">
+        <label class="choice">
+          <input type="radio" name="packages" data-key="packages" value="standard" ${state.packages === 'standard' ? 'checked' : ''}>
+          <strong>Standard system utilities</strong>
+          <span>The tools you need for the first labs. Recommended.</span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="packages" data-key="packages" value="minimal" ${state.packages === 'minimal' ? 'checked' : ''}>
+          <strong>Minimal</strong>
+          <span>A smaller install. You will add tools later.</span>
+        </label>
+      </div>
+    `;
+  }
+
+  function summaryRow(label, value) {
+    return `<tr><th>${esc(label)}</th><td>${esc(value)}</td></tr>`;
+  }
+
+  function reviewBody() {
+    return `
+      <table class="summary">
+        ${summaryRow('Release', releaseLabel())}
+        ${summaryRow('Hostname', state.hostname)}
+        ${summaryRow('Network', state.network === 'dhcp' ? 'DHCP' : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`)}
+        ${summaryRow('Storage', state.storage === 'guided' ? `Guided, ${state.disk} GB disk` : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap on ${state.disk} GB disk`)}
+        ${summaryRow('User', `${state.fullname} (${state.username})`)}
+        ${summaryRow('SSH', state.ssh ? 'OpenSSH server' : 'Not installed')}
+        ${summaryRow('Packages', state.packages === 'standard' ? 'Standard system utilities' : 'Minimal')}
+      </table>
+      <p class="hint" style="margin-top:16px">This is the build record for your portfolio. Download it before you continue.</p>
+      <button class="btn" id="download-record" type="button">Download build record</button>
+    `;
+  }
+
+  function installBody() {
+    return `
+      <p class="lede">The installer is copying the system, creating the user and writing the boot loader. In the real world this takes a few minutes.</p>
+      <div class="progress-wrap">
+        <div class="progress"><span id="progress-bar"></span></div>
+        <p class="hint" id="progress-label">Preparing...</p>
+      </div>
+      <div class="install-log" id="install-log" aria-live="polite"></div>
+    `;
+  }
+
+  function desktopBody() {
+    return `
+      <div class="desktop">
+        <div class="desktop-top">
+          <span class="desktop-title">Activities</span>
+          <span>${esc(state.hostname)} &middot; Ubuntu Server</span>
+          <span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+        </div>
+        <div class="desktop-icons">
+          <button class="desk-icon" id="open-terminal" type="button">
+            <span class="icon-tile icon-terminal">&gt;_</span>
+            <span>Terminal</span>
+          </button>
+          <button class="desk-icon" type="button" id="files-demo">
+            <span class="icon-tile icon-files">F</span>
+            <span>Files</span>
+          </button>
+          <button class="desk-icon" type="button" id="settings-demo">
+            <span class="icon-tile icon-settings">S</span>
+            <span>Settings</span>
+          </button>
+        </div>
+        <div class="desktop-note">The desktop is a mock. Open the terminal for the real commands.</div>
+      </div>
+      <div class="footer" style="margin-top:16px">
+        <button class="btn" id="download-record-3" type="button">Download build record</button>
+        <button class="btn" id="start-over" type="button">Start over</button>
+      </div>
+    `;
+  }
+
+  function bodyFor(id) {
+    if (id === 'release') return `
+      <h3>What are you installing?</h3>
+      <p class="lede">Choose the operating system for the CloudCore host. The host is the Ubuntu machine under the container estate.</p>
+      ${releaseChoices()}
+    `;
+    if (id === 'network') return `
+      <h3>Network</h3>
+      <p class="lede">The host needs an address, a route and a name. DHCP is fine for the lab. Static addressing is what you would use for a server with a fixed role.</p>
+      ${networkBody()}
+    `;
+    if (id === 'storage') return `
+      <h3>Storage</h3>
+      <p class="lede">This is the decision the old VirtualBox lab hid. A server needs a root file system and some room for updates. Guided partitioning is the safe default.</p>
+      ${storageBody()}
+    `;
+    if (id === 'user') return `
+      <h3>User</h3>
+      <p class="lede">Create the first administrative user. This is the account you will use for <code>sudo</code>.</p>
+      ${userBody()}
+    `;
+    if (id === 'ssh') return `
+      <h3>Remote access</h3>
+      <p class="lede">A server you cannot reach is a server you cannot administer. SSH is the normal path.</p>
+      ${sshBody()}
+    `;
+    if (id === 'packages') return `
+      <h3>Packages</h3>
+      <p class="lede">The installer can add a standard set of utilities. You can install more later with <code>apt</code>.</p>
+      ${packagesBody()}
+    `;
+    if (id === 'review') return `
+      <h3>Review</h3>
+      <p class="lede">Check the build record. If something is wrong, go back and change it before the install.</p>
+      ${reviewBody()}
+    `;
+    if (id === 'install') return `
+      <h3>Installing</h3>
+      ${installBody()}
+    `;
+    if (id === 'desktop') return `
+      <h3>The host is ready</h3>
+      <p class="lede">This is the desktop you would see after the first boot. Open the terminal to continue on your own machine.</p>
+      ${desktopBody()}
+    `;
+    return '';
+  }
+
+  function render() {
+    const step = steps[current];
+    renderSteps();
+    titleEl.textContent = step.label === 'Release' ? 'Choose the release' : step.label;
+    countEl.textContent = `Step ${current + 1} of ${steps.length}`;
+    bodyEl.innerHTML = bodyFor(step.id);
+    updateFeedback();
+    backEl.disabled = current === 0 || step.id === 'install';
+    if (step.id === 'install') {
+      nextEl.textContent = installDone ? 'Reboot' : 'Installing...';
+      nextEl.disabled = !installDone;
+    } else if (step.id === 'desktop') {
+      nextEl.textContent = 'Start over';
+      nextEl.disabled = false;
+    } else if (step.id === 'review') {
+      nextEl.textContent = 'Install';
+      nextEl.disabled = hasErrors('review');
+    } else {
+      nextEl.textContent = 'Next';
+      nextEl.disabled = hasErrors(step.id);
+    }
+    if (step.id === 'install' && !installTimer && !installDone) startInstall();
+  }
+
+  function syncNext() {
+    const id = steps[current].id;
+    if (id === 'install') {
+      nextEl.disabled = !installDone;
+      return;
+    }
+    if (id === 'desktop') {
+      nextEl.disabled = false;
+      return;
+    }
+    nextEl.disabled = hasErrors(id);
+  }
+
+  function updateFeedback() {
+    const id = steps[current].id;
+    const issues = validateStep(id);
+    if (!issues.length) {
+      feedbackEl.innerHTML = '<p class="ok">No problems on this screen.</p>';
+    } else {
+      feedbackEl.innerHTML = issues.map((issue) => `<p class="${issue.level}">${esc(issue.text)}</p>`).join('');
+    }
+    syncNext();
+  }
+
+  function updateStoragePreview() {
+    const preview = $('storage-preview');
+    if (preview) {
+      preview.textContent = `Using ${partitionTotal()} GB of ${state.disk} GB.`;
+    }
+  }
+
+  function startInstall() {
+    installProgress = 0;
+    installDone = false;
+    const log = $('install-log');
+    const bar = $('progress-bar');
+    const label = $('progress-label');
+    if (!log || !bar || !label) return;
+    const lines = [
+      'Reading partition table...',
+      'Creating ext4 root file system...',
+      'Installing base system...',
+      'Configuring network...',
+      `Creating user ${state.username}...`,
+      state.ssh ? 'Installing OpenSSH server...' : 'Skipping OpenSSH server...',
+      'Installing standard packages...',
+      'Writing boot loader...',
+      'Finishing...'
+    ];
+    let lineIndex = 0;
+    log.textContent = '';
+    installTimer = setInterval(() => {
+      installProgress = Math.min(100, installProgress + 7 + Math.random() * 6);
+      bar.style.width = `${installProgress}%`;
+      label.textContent = installProgress < 100 ? `Installing... ${Math.floor(installProgress)}%` : 'Install complete. Reboot when ready.';
+      while (lineIndex < lines.length && lineIndex < Math.floor((installProgress / 100) * lines.length)) {
+        const p = document.createElement('div');
+        p.textContent = `[ ok ] ${lines[lineIndex]}`;
+        p.className = 'ok';
+        log.appendChild(p);
+        lineIndex += 1;
+      }
+      log.scrollTop = log.scrollHeight;
+      if (installProgress >= 100) {
+        installProgress = 100;
+        installDone = true;
+        clearInterval(installTimer);
+        installTimer = null;
+        bar.style.width = '100%';
+        label.textContent = 'Install complete. Reboot when ready.';
+        nextEl.textContent = 'Reboot';
+        nextEl.disabled = false;
+      }
+    }, 420);
+  }
+
+  function buildRecord() {
+    const network = state.network === 'dhcp'
+      ? 'DHCP'
+      : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`;
+    const storage = state.storage === 'guided'
+      ? `Guided, ${state.disk} GB disk`
+      : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap on ${state.disk} GB disk`;
+    return [
+      '# CloudCore host build record',
+      '',
+      `- Release: ${releaseLabel()}`,
+      `- Hostname: ${state.hostname}`,
+      `- Network: ${network}`,
+      `- Storage: ${storage}`,
+      `- User: ${state.fullname} (${state.username})`,
+      `- SSH: ${state.ssh ? 'OpenSSH server' : 'not installed'}`,
+      `- Packages: ${state.packages === 'standard' ? 'standard system utilities' : 'minimal'}`,
+      '- Password: set in the simulation, not recorded',
+      '',
+      '## Why these choices',
+      '',
+      '- The release is a long-term support release, so the host is supported for the life of the unit and beyond.',
+      '- The hostname identifies the service pod on the network.',
+      '- The network choice matches the lab. A static address is for a fixed server role.',
+      '- The storage layout leaves room for updates, logs and container images.',
+      '- The user is the administrative account. SSH is the normal remote-access path.',
+      '',
+      '## Next step',
+      '',
+      'On your machine: install Docker Desktop or Podman, download the lab pack, then run:',
+      '',
+      '```bash',
+      './start.sh host',
+      '```',
+      '',
+      'The simulated install is complete. The real host is an Ubuntu container shell.',
+      ''
+    ].join('\n');
+  }
+
+  function downloadRecord() {
+    const blob = new Blob([buildRecord()], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cloudcore-host-build-record.md';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function terminalCommands() {
+    return [
+      '<span class="comment"># 1. Install Docker Desktop or Podman (see Module 00).</span>',
+      '<span class="comment"># 2. Download the lab pack.</span>',
+      '<span class="prompt">$</span> <span class="cmd">git clone https://github.com/michael-borck/enterprise-estate-labs.git</span>',
+      '<span class="prompt">$</span> <span class="cmd">cd enterprise-estate-labs</span>',
+      '<span class="comment"># 3. Start the Ubuntu host shell (default sudo password: cloudcore).</span>',
+      '<span class="prompt">$</span> <span class="cmd">./start.sh host</span>',
+      '<span class="comment"># 4. In a second terminal, start the CloudCore estate.</span>',
+      '<span class="prompt">$</span> <span class="cmd">./start.sh m03</span>',
+      '<span class="comment"># 5. Change the default password once you are in the host.</span>',
+      '<span class="prompt">student@cloudcore-host:~$</span> <span class="cmd">passwd</span>'
+    ].join('\n');
+  }
+
+  function openTerminal() {
+    $('terminal-commands').innerHTML = terminalCommands();
+    $('terminal-modal').classList.add('open');
+    $('close-terminal').focus();
+  }
+
+  function closeTerminal() {
+    $('terminal-modal').classList.remove('open');
+    const open = $('open-terminal');
+    if (open) open.focus();
+  }
+
+  function goNext() {
+    const id = steps[current].id;
+    if (id === 'install') {
+      if (!installDone) return;
+      current = steps.findIndex((step) => step.id === 'desktop');
+      render();
+      return;
+    }
+    if (id === 'desktop') {
+      reset();
+      return;
+    }
+    if (hasErrors(id)) return;
+    if (id === 'review') {
+      if (hasErrors('review')) return;
+      current = steps.findIndex((step) => step.id === 'install');
+      render();
+      return;
+    }
+    current = Math.min(steps.length - 1, current + 1);
+    render();
+  }
+
+  function goBack() {
+    if (steps[current].id === 'install') return;
+    current = Math.max(0, current - 1);
+    render();
+  }
+
+  function reset() {
+    if (installTimer) clearInterval(installTimer);
+    installTimer = null;
+    installProgress = 0;
+    installDone = false;
+    Object.assign(state, {
+      release: 'ubuntu-24.04',
+      hostname: 'cloudcore-host',
+      network: 'dhcp',
+      ip: '10.0.2.15/24',
+      gateway: '10.0.2.2',
+      dns: '10.0.2.3',
+      storage: 'guided',
+      disk: 20,
+      rootSize: 18,
+      swap: 2,
+      fullname: 'CloudCore Student',
+      username: 'student',
+      password: '',
+      confirm: '',
+      ssh: true,
+      packages: 'standard'
+    });
+    current = 0;
+    render();
+  }
+
+  document.addEventListener('input', (event) => {
+    const key = event.target.dataset.key;
+    if (!key) return;
+    if (event.target.type === 'checkbox') {
+      state[key] = event.target.checked;
+    } else if (event.target.type === 'number') {
+      state[key] = Number(event.target.value);
+    } else {
+      state[key] = event.target.value;
+    }
+    updateFeedback();
+    if (['storage', 'disk', 'rootSize', 'swap'].includes(key)) {
+      if (key === 'storage') {
+        render();
+      } else {
+        updateStoragePreview();
+      }
+    }
+    if (steps[current].id === 'review') {
+      nextEl.disabled = hasErrors('review');
+    }
+  });
+
+  document.addEventListener('change', (event) => {
+    const key = event.target.dataset.key;
+    if (!key) return;
+    if (event.target.type === 'radio' || event.target.type === 'checkbox') {
+      state[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+      if (key === 'network' || key === 'storage') {
+        render();
+      } else {
+        updateFeedback();
+      }
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('#next')) { goNext(); return; }
+    if (target.closest('#back')) { goBack(); return; }
+    if (target.closest('#download-record') || target.closest('#download-record-2') || target.closest('#download-record-3')) {
+      downloadRecord();
+      return;
+    }
+    if (target.closest('#open-terminal')) { openTerminal(); return; }
+    if (target.closest('#close-terminal')) { closeTerminal(); return; }
+    if (target.closest('#start-over')) { reset(); return; }
+    if (target.closest('#files-demo')) {
+      alert('Files is a mock. The real host is the Ubuntu container shell.');
+      return;
+    }
+    if (target.closest('#settings-demo')) {
+      alert('Settings is a mock. The real host is the Ubuntu container shell.');
+      return;
+    }
+    if (target.closest('#copy-commands')) {
+      const text = terminalCommands().replace(/<[^>]+>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+      navigator.clipboard.writeText(text).then(() => {
+        target.textContent = 'Copied';
+        setTimeout(() => { target.textContent = 'Copy commands'; }, 1500);
+      }).catch(() => {});
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeTerminal();
+  });
+
+  $('terminal-modal').addEventListener('click', (event) => {
+    if (event.target === $('terminal-modal')) closeTerminal();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

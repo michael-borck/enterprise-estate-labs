@@ -8,17 +8,19 @@ the whole share, and explain the ownership model.
 ## Before you start
 
 ```bash
-make m09
-make status
+./start.sh m09
+./start.sh status
 ```
 
-The `writer` service runs as user `1000:1000`. The shared volume is created by Docker as
-root. On the first run, the writer cannot create `/share/report.log`.
+The `writer` service runs as user `1000:1000`. The shared volume is created as root. On
+the first run, the writer cannot create `/share/report.log`.
+
+The launcher finds the container runtime for you. You do not need to choose one.
 
 ## Part 1: Observe the failure
 
 ```bash
-docker compose logs writer
+./start.sh logs writer
 ```
 
 1. What error do you see?
@@ -28,7 +30,7 @@ docker compose logs writer
 Inspect the volume:
 
 ```bash
-docker compose --profile m09 run --rm --user root writer sh -c 'ls -ld /share; ls -l /share'
+./start.sh run --rm --user root writer sh -c 'ls -ld /share; ls -l /share'
 ```
 
 **Predict before you act:** what is the smallest change that lets the writer create and
@@ -37,19 +39,19 @@ append to its own log file without giving it more access than it needs?
 ## Part 2: Fix it
 
 ```bash
-make fix-m09
-docker compose logs -f writer
+./start.sh fix-m09
+./start.sh logs writer
 ```
 
 You should see `report ok` lines. Stop following with `Ctrl-C`.
 
 If the log still shows old `Permission denied` lines, they are history. Check the file
-instead, or use `docker compose logs --since 15s writer`.
+instead.
 
 Check the file:
 
 ```bash
-docker compose --profile m09 run --rm --user root writer sh -c 'ls -l /share; tail -n 3 /share/report.log'
+./start.sh run --rm --user root writer sh -c 'ls -l /share; tail -n 3 /share/report.log'
 ```
 
 ## Part 3: Explain the fix
@@ -63,8 +65,8 @@ docker compose --profile m09 run --rm --user root writer sh -c 'ls -l /share; ta
 ## Part 4: Put it back
 
 ```bash
-make break-m09
-docker compose logs writer
+./start.sh break-m09
+./start.sh logs writer
 ```
 
 The failure returns. This is the reset point for the exercise.
@@ -79,8 +81,8 @@ The failure returns. This is the reset point for the exercise.
 
 ## AI prompts
 
-- "A container runs as UID 1000 and a Docker named volume is owned by root. Explain why
-  the write fails and what the smallest fix is."
+- "A container runs as UID 1000 and a named volume is owned by root. Explain why the
+  write fails and what the smallest fix is."
 - "Compare `chmod 777`, group ownership and an ACL for a shared directory used by two
   services."
 - "Where does this explanation overreach? What does it leave out about UID mapping on the
@@ -89,5 +91,5 @@ The failure returns. This is the reset point for the exercise.
 ## Clean up
 
 ```bash
-make down
+./start.sh down
 ```

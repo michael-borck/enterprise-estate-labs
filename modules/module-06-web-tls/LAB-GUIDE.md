@@ -8,12 +8,14 @@ explain where TLS ends and where the request is re-originated.
 ## Before you start
 
 ```bash
-make m06
-make status
+./start.sh m06
+./start.sh status
 ```
 
-Open <https://localhost:8443>. The certificate is self-signed, so the browser warning is
-expected. Do not click through blindly. Inspect the certificate first.
+Open <https://localhost:8443>. The certificate is issued locally, so the browser warning
+is expected. Do not click through blindly. Inspect the certificate first.
+
+The launcher finds the container runtime for you. You do not need to choose one.
 
 ## Part 1: Read the certificate
 
@@ -41,7 +43,7 @@ Look at the certificate chain and the verification result.
 5. Read the Caddy and nginx logs:
 
 ```bash
-make logs
+./start.sh logs
 ```
 
 **Predict before you act:** where does TLS terminate? Which service holds the
@@ -52,7 +54,7 @@ certificate? Which service sees the plain HTTP request?
 Edit `estate/proxy/Caddyfile` and change the upstream from `web:80` to `web:81`.
 
 ```bash
-docker compose --profile m03 --profile m06 restart proxy
+./start.sh restart proxy
 curl -k https://localhost:8443/
 ```
 
@@ -79,5 +81,5 @@ curl -k https://localhost:8443/
 ## Clean up
 
 ```bash
-make down
+./start.sh down
 ```

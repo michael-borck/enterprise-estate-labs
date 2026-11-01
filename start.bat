@@ -1,9 +1,24 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-docker compose --profile m03 --profile m06 up -d
+
+rem Prefer Git Bash, which ships with Git for Windows. The launcher is a bash
+rem script so there is one code path, not a separate Windows implementation.
+set "GITBASH=C:\Program Files\Git\bin\bash.exe"
+if exist "%GITBASH%" (
+  "%GITBASH%" ./start.sh %*
+  exit /b %errorlevel%
+)
+
+where bash >nul 2>nul
+if %errorlevel%==0 (
+  bash ./start.sh %*
+  exit /b %errorlevel%
+)
+
 echo.
-echo Enterprise estate is up.
-echo   TLS proxy:  https://localhost:8443  (self-signed, expect a warning)
-echo   HTTP proxy: http://localhost:8080
+echo Git Bash was not found.
+echo Install Git for Windows (it includes Git Bash), then run start.bat again.
 echo.
-echo Open modules\module-06-web-tls\LAB-GUIDE.md
+pause
+exit /b 1

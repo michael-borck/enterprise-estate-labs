@@ -2,7 +2,29 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-COMPOSE="${COMPOSE:-docker compose}"
+ENGINE="${CONTAINER_ENGINE:-}"
+if [[ -z "$ENGINE" ]]; then
+  if command -v docker >/dev/null 2>&1; then
+    ENGINE="docker"
+  elif command -v podman >/dev/null 2>&1; then
+    ENGINE="podman"
+  else
+    echo "No container runtime found." >&2
+    exit 1
+  fi
+fi
+
+if [[ -z "${COMPOSE:-}" ]]; then
+  if [[ "$ENGINE" == "podman" ]]; then
+    if podman compose version >/dev/null 2>&1; then
+      COMPOSE="podman compose"
+    else
+      COMPOSE="podman-compose"
+    fi
+  else
+    COMPOSE="docker compose"
+  fi
+fi
 
 cleanup() {
   $COMPOSE --profile m03 --profile m06 --profile m09 down -v --remove-orphans >/dev/null 2>&1 || true

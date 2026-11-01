@@ -1,3 +1,3 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-./start.sh
+exec bash ./start.sh "$@"

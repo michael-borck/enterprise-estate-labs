@@ -3,7 +3,7 @@
 > **Status:** prototype. The Module 03, 06 and 09 slice is built and tested. The rest
 > of the estate follows once the cumulative-state pattern is proven in a real lab.
 
-A self-contained, Docker-based enterprise estate for a first course in enterprise
+A self-contained, container-based enterprise estate for a first course in enterprise
 technology. Students build, operate and secure one Linux and container estate across
 the semester. The labs use real services: nginx, PostgreSQL, Caddy, named volumes,
 permissions, logs and packet capture.
@@ -17,57 +17,45 @@ prompts.
 
 ## Quick start
 
-You need Docker or Podman. See [`modules/module-00-setup/README.md`](modules/module-00-setup/README.md).
+Install a container runtime once. Docker Desktop and Podman both work; the launcher
+finds whichever is installed. See [`modules/module-00-setup/README.md`](modules/module-00-setup/README.md).
 
 ```bash
-make m03        # web, db and tools
-make m06        # cumulative: adds the TLS proxy
-make m09        # cumulative: adds the shared volume and permission fault
-make status
-make console    # shell on the tools container
+git clone <repo-url>
+cd enterprise-estate-labs
+./start.sh m03
 ```
 
-Or run `./start.sh` to bring up the Module 06 state and print the URLs.
+On Windows, double-click `start.bat` or run it from a terminal.
 
-Open <https://localhost:8443>. The certificate is self-signed, so the browser warning
-is expected. That warning is part of Module 06.
+The launcher is the front door. You do not choose an engine.
 
-Stop and reset:
+| Command | What it does |
+|---|---|
+| `./start.sh m03` | Start the Module 03 state: web, db and tools |
+| `./start.sh m06` | Start the cumulative Module 06 state and add the TLS proxy |
+| `./start.sh m09` | Start the cumulative Module 09 state and add the shared volume |
+| `./start.sh status` | Show what is running |
+| `./start.sh console` | Shell on the tools container |
+| `./start.sh logs` | Follow the logs |
+| `./start.sh stop` | Stop the estate, keep the volumes |
+| `./start.sh down` | Remove the containers and networks, keep the volumes |
+| `./start.sh reset m09` | Remove the volumes and return to a clean Module 09 state |
+| `./start.sh smoke` | Validate all three states end to end |
 
-```bash
-make stop
-make down
-make reset-m09  # remove volumes and return to a clean Module 09 state
-make smoke      # validate the three states end to end
-```
-
-Podman:
-
-```bash
-make m06 CONTAINER_ENGINE=podman
-```
+Open <https://localhost:8443>. The certificate is issued by a local authority, so the
+browser warning is expected. That warning is part of Module 06.
 
 ## What runs
 
 | Module | State | Services |
 |---|---|---|
-| 03 | Containers and limits | `db` (PostgreSQL), `web` (nginx), `tools` (netshoot) |
+| 03 | Containers and limits | `db` (PostgreSQL), `web` (nginx), `tools` (network shell) |
 | 06 | Web and TLS | adds `proxy` (Caddy, internal TLS) |
 | 09 | File systems and access control | adds `writer` and a shared volume with a permission fault |
 
-The states are cumulative. `make m06` also brings up Module 03. `make m09` also brings
-up Modules 03 and 06. Nothing else runs.
-
-## Design
-
-- **One estate, cumulative states.** Module numbers are states, not independent labs.
-- **One compose file.** Services are selected by profiles `m03`, `m06`, `m09`.
-- **Resettable.** `make reset-mNN` removes volumes and returns to that state.
-- **Offline-friendly.** Images are prebuilt. The only external access is the initial pull.
-- **No host bind mounts for data.** Named volumes keep the labs portable across macOS,
-  Windows and Linux, including external drives.
-- **Student-owned artefact.** The lab repo is a toolkit. Students work in their own
-  estate repository, which is what the portfolio assesses.
+The states are cumulative. `./start.sh m06` also brings up Module 03. `./start.sh m09`
+also brings up Modules 03 and 06. Nothing else runs.
 
 ## Modules
 
@@ -80,6 +68,30 @@ up Modules 03 and 06. Nothing else runs.
 
 Planned: 04 networking, 05 addressing and naming, 08 identity, 10 storage, 11 security
 and incident response. The host VM bootstrap is planned for `host/`.
+
+## Design
+
+- **One estate, cumulative states.** Module numbers are states, not independent labs.
+- **One compose file.** Services are selected by profiles `m03`, `m06`, `m09`.
+- **Resettable.** `./start.sh reset mNN` removes volumes and returns to that state.
+- **Offline-friendly.** Images are prebuilt. The only external access is the initial pull.
+- **No host bind mounts for data.** Named volumes keep the labs portable across macOS,
+  Windows and Linux, including external drives.
+- **Student-owned artefact.** The lab repo is a toolkit. Students work in their own
+  estate repository, which is what the portfolio assesses.
+
+## For staff and advanced users
+
+`./start.sh` hides the engine choice. The `Makefile` is the staff and CI path, and it
+supports either engine:
+
+```bash
+make m09
+make smoke
+make m09 CONTAINER_ENGINE=podman
+```
+
+The compose file is engine-neutral. There is one set of labs, not two.
 
 ## AI use
 

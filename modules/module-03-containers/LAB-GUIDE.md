@@ -8,10 +8,12 @@ what the resource limits are doing.
 ## Before you start
 
 ```bash
-make m03
-make status
-make console
+./start.sh m03
+./start.sh status
+./start.sh console
 ```
+
+The launcher finds the container runtime for you. You do not need to choose one.
 
 Inside the tools container:
 
@@ -23,7 +25,7 @@ You should see the CloudCore estate page.
 
 ## Part 1: What is running
 
-1. From the host, run `make status`. Which containers are running?
+1. From the host, run `./start.sh status`. Which containers are running?
 2. From the tools container, run `ps aux`. How many processes can you see?
 3. Run `curl -s http://web/ | head`. What did the web tier return?
 4. Open `compose.yml`. Find the `deploy.resources.limits` for `web` and `db`.
@@ -42,7 +44,7 @@ while true; do curl -s http://web/ >/dev/null; done
 From the host, in a second terminal:
 
 ```bash
-docker stats --no-stream
+./start.sh stats
 ```
 
 Watch the `CPU %` and `MEM USAGE / LIMIT` columns for `web` and `db`.
@@ -58,15 +60,15 @@ Stop the loop with `Ctrl-C`.
 From the host, lower the web container's CPU limit:
 
 ```bash
-docker update --cpus 0.05 enterprise-estate-web-1
+./start.sh limit web 0.05
 ```
 
-The container name may differ. Use `make status` to find it.
+You do not need the container name. The launcher finds it.
 
-Run the load loop again and observe `docker stats`. Then restore the limit:
+Run the load loop again and observe `./start.sh stats`. Then restore the limit:
 
 ```bash
-docker update --cpus 0.25 enterprise-estate-web-1
+./start.sh limit web 0.25
 ```
 
 **Record:** what changed, what you expected, and what actually happened.
@@ -76,7 +78,7 @@ docker update --cpus 0.25 enterprise-estate-web-1
 Add these to your conversation log or portfolio:
 
 - Your prediction before the first load test.
-- The `docker stats` output before, during and after the load.
+- The `./start.sh stats` output before, during and after the load.
 - One sentence explaining why the container is limited rather than the host.
 - One place where AI was wrong, vague or over-confident.
 
@@ -84,7 +86,7 @@ Add these to your conversation log or portfolio:
 
 Use these as conversation starters, then challenge the answer:
 
-- "Explain what a Docker CPU limit does to a process inside the container, and what it
+- "Explain what a container CPU limit does to a process inside the container, and what it
   does not do to the host."
 - "A web container is limited to 0.25 CPU. What will a client observe under sustained
   load, and what will the container itself observe?"
@@ -94,5 +96,5 @@ Use these as conversation starters, then challenge the answer:
 ## Clean up
 
 ```bash
-make down
+./start.sh down
 ```

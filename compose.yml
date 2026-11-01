@@ -1,0 +1,84 @@
+name: enterprise-estate
+
+services:
+  db:
+    image: postgres:16-alpine
+    profiles: ["m03"]
+    environment:
+      POSTGRES_DB: estate
+      POSTGRES_USER: estate
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-estate-demo}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./estate/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [estate]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estate -d estate"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+
+  web:
+    image: nginx:1.27-alpine
+    profiles: ["m03"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./estate/web/index.html:/usr/share/nginx/html/index.html:ro
+    networks: [estate]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  tools:
+    image: nicolaka/netshoot:latest
+    profiles: ["m03"]
+    command: ["sleep", "infinity"]
+    networks: [estate]
+
+  proxy:
+    image: caddy:2-alpine
+    profiles: ["m06"]
+    depends_on: [web]
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./estate/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [estate]
+
+  writer:
+    image: alpine:3.20
+    profiles: ["m09"]
+    user: "1000:1000"
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          echo "$(date -Iseconds) report ok" >> /share/report.log 2>/dev/null || \
+            echo "$(date -Iseconds) permission denied writing /share/report.log" >&2
+          sleep 5
+        done
+    volumes:
+      - share-data:/share
+    networks: [estate]
+
+networks:
+  estate:
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
+  share-data:

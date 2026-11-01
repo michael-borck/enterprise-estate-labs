@@ -1,0 +1,12 @@
+# Local environment
+.env
+*.log
+
+# Build and offline artefacts
+dist/
+_output/
+_packages/
+
+# macOS / external drive junk
+._*
+.DS_Store

@@ -31,16 +31,41 @@ container is the userland where you do the OS work.
 - Configure permissions and ownership.
 - Use the container network: addresses, routes, ports, DNS and `tcpdump`.
 - Configure files, services and logs.
+- Run a supervised service and read its configuration and log.
 
 ## What it cannot do
 
 - Install a kernel or bootloader.
 - Partition a real disk.
 - Configure the physical host or its hardware.
-- Run `systemd` as PID 1 in the default container.
+- Run `systemd` as PID 1 in the default container. It uses `supervisord` instead.
 
 The simulation covers the install and boot decisions. The host shell covers the
 configuration work.
+
+## Heartbeat service
+
+The image includes a small `heartbeat` service under `supervisord`:
+
+```bash
+sudo supervisord -c /etc/supervisor/supervisord.conf
+sudo supervisorctl status
+tail -n 5 /var/log/heartbeat.log
+```
+
+The configuration is `/etc/supervisor/conf.d/heartbeat.conf`. It sets the command, the
+`HEARTBEAT_INTERVAL` environment variable, the restart policy and the log file. After an
+edit:
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl status
+```
+
+A real host would use `systemd` and a unit file. The concepts are the same: a supervisor
+starts, stops, restarts and logs a process. The container uses `supervisord` because it is
+not running an init system.
 
 ## Try it
 

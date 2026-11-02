@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     psmisc \
     rsync \
+    strace \
     sudo \
+    supervisor \
     tree \
     vim \
     wget \
@@ -39,6 +41,11 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
     && echo "${USERNAME}:cloudcore" | chpasswd \
     && echo "${USERNAME} ALL=(ALL:ALL) ALL" > "/etc/sudoers.d/${USERNAME}" \
     && chmod 0440 "/etc/sudoers.d/${USERNAME}"
+
+COPY scripts/heartbeat.sh /usr/local/bin/heartbeat.sh
+COPY config/supervisor/heartbeat.conf /etc/supervisor/conf.d/heartbeat.conf
+RUN chmod +x /usr/local/bin/heartbeat.sh \
+    && chmod 0644 /etc/supervisor/conf.d/heartbeat.conf
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}

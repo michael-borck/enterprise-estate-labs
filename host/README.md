@@ -44,7 +44,7 @@ configuration work.
 
 ## Try it
 
-The online copy is at <https://michael-borck.github.io/enterprise-estate-labs/>.
+The online copy is at <https://install-sim.borck.education/>.
 
 First time:
 

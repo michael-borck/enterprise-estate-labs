@@ -54,7 +54,7 @@ browser warning is expected. That warning is part of Module 06.
 
 The host is an Ubuntu container shell. The operating-system install is a browser
 simulation: open [`index.html`](index.html) in the lab pack root, or use the online copy at
-<https://michael-borck.github.io/enterprise-estate-labs/>. The real host is the userland you
+<https://install-sim.borck.education/>. The real host is the userland you
 configure with `./start.sh host`.
 
 ## What runs

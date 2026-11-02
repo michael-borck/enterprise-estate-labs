@@ -62,4 +62,10 @@ shell. If you have already done the simulation:
 The default `sudo` password is `cloudcore`. Change it with `passwd`. Your home directory is
 kept in the `cloudcore-host-home` volume.
 
+The lab host is limited to 2 GB of memory and 2 CPUs. The simulation lets you make the
+sizing decision; the real host uses this fixed lab size. `free` may still show the host's
+memory because `/proc/meminfo` is not namespaced; check `/sys/fs/cgroup/memory.max` for the
+real limit. The host's root filesystem is the container runtime's storage, not a separate
+20 GB block device.
+
 The simulation sits in the lab pack root, next to `start.bat` and `start.sh`.

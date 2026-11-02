@@ -138,6 +138,7 @@ start_host() {
   fi
   "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
   "$ENGINE" run --rm "${tty_flags[@]}" --name cloudcore-host --hostname cloudcore-host \
+    --memory 2g --cpus 2 \
     -v cloudcore-host-home:/home/student "$image"
 }
 

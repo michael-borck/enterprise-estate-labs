@@ -23,16 +23,17 @@ finds whichever is installed. See [`modules/module-00-setup/README.md`](modules/
 ```bash
 git clone https://github.com/michael-borck/enterprise-estate-labs.git
 cd enterprise-estate-labs
-./start.sh host   # the Ubuntu host shell
+./start.sh guide  # install simulation, then the Ubuntu host shell
 ./start.sh m03    # the CloudCore estate
 ```
 
-On Windows, double-click `start.bat` or run it from a terminal.
+On Windows, use `start.bat guide` and `start.bat m03`.
 
 The launcher is the front door. You do not choose an engine.
 
 | Command | What it does |
 |---|---|
+| `./start.sh guide` | Open the install simulation, then the host shell |
 | `./start.sh host` | Start the Ubuntu host shell |
 | `./start.sh host reset` | Remove the host shell and its home volume |
 | `./start.sh m03` | Start the Module 03 state: web, db and tools |

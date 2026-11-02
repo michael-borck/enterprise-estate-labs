@@ -44,6 +44,15 @@ configuration work.
 
 ## Try it
 
+First time:
+
+```bash
+./start.sh guide
+```
+
+That opens `../index.html`, waits while you complete the simulation, then starts the host
+shell. If you have already done the simulation:
+
 ```bash
 ./start.sh host
 ```
@@ -51,5 +60,4 @@ configuration work.
 The default `sudo` password is `cloudcore`. Change it with `passwd`. Your home directory is
 kept in the `cloudcore-host-home` volume.
 
-Open `../index.html` in a browser to walk through the install decisions first. It sits in
-the lab pack root, next to `start.bat` and `start.sh`.
+The simulation sits in the lab pack root, next to `start.bat` and `start.sh`.

@@ -25,6 +25,7 @@
 #   ./start.sh break-m09
 #   ./start.sh smoke
 #   ./start.sh pull
+#   ./start.sh guide           open the install simulation, then the host shell
 #   ./start.sh host            start the Ubuntu host shell
 #   ./start.sh host reset      remove the host shell and its home volume
 set -euo pipefail
@@ -88,6 +89,7 @@ CloudCore estate launcher
   ./start.sh break-m09       put the finance share back into the broken state
   ./start.sh smoke           run the smoke test
   ./start.sh pull            pull the images
+  ./start.sh guide           open the install simulation, then the host shell
   ./start.sh host            start the Ubuntu host shell
   ./start.sh host reset      remove the host shell and its home volume
 
@@ -122,6 +124,21 @@ service_cid() {
     return 1
   fi
   printf '%s\n' "$cid"
+}
+
+start_host() {
+  local image="cloudcore-host:latest"
+  if ! "$ENGINE" image inspect "$image" >/dev/null 2>&1; then
+    echo "Building the CloudCore host image (first run only)..."
+    "$ENGINE" build -t "$image" -f host/Dockerfile host
+  fi
+  local tty_flags=(-i)
+  if [[ -t 0 && -t 1 ]]; then
+    tty_flags=(-it)
+  fi
+  "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
+  "$ENGINE" run --rm "${tty_flags[@]}" --name cloudcore-host --hostname cloudcore-host \
+    -v cloudcore-host-home:/home/student "$image"
 }
 
 cmd="${1:-help}"
@@ -224,26 +241,43 @@ case "$cmd" in
     CONTAINER_ENGINE="$ENGINE" ./tests/smoke.sh
     ;;
 
+  guide)
+    echo "Opening the install simulation..."
+    case "$(uname -s)" in
+      Darwin)
+        open index.html 2>/dev/null || echo "Open this file in your browser: $(pwd)/index.html"
+        ;;
+      MINGW*|MSYS*|CYGWIN*)
+        cmd.exe /c start "" index.html 2>/dev/null || echo "Open this file in your browser: $(pwd)/index.html"
+        ;;
+      *)
+        if command -v xdg-open >/dev/null 2>&1; then
+          xdg-open index.html 2>/dev/null || echo "Open this file in your browser: $(pwd)/index.html"
+        else
+          echo "Open this file in your browser: $(pwd)/index.html"
+        fi
+        ;;
+    esac
+    echo
+    echo "Complete the simulation and download the build record."
+    echo "Keep the build record for your portfolio."
+    echo
+    read -r -p "Press Enter when you are ready to start the host shell..." _
+    start_host
+    echo
+    echo "When you are finished in the host shell, start the estate in a second terminal:"
+    echo "  ./start.sh m03"
+    ;;
+
   host)
     host_cmd="${1:-}"
-    image="cloudcore-host:latest"
     if [[ "$host_cmd" == "reset" ]]; then
       "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
       "$ENGINE" volume rm cloudcore-host-home >/dev/null 2>&1 || true
       echo "Host shell reset. The next ./start.sh host starts clean."
       exit 0
     fi
-    if ! "$ENGINE" image inspect "$image" >/dev/null 2>&1; then
-      echo "Building the CloudCore host image (first run only)..."
-      "$ENGINE" build -t "$image" -f host/Dockerfile host
-    fi
-    tty_flags=(-i)
-    if [[ -t 0 && -t 1 ]]; then
-      tty_flags=(-it)
-    fi
-    "$ENGINE" rm -f cloudcore-host >/dev/null 2>&1 || true
-    "$ENGINE" run --rm "${tty_flags[@]}" --name cloudcore-host --hostname cloudcore-host \
-      -v cloudcore-host-home:/home/student "$image"
+    start_host
     ;;
 
   pull)

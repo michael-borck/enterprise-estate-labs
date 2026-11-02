@@ -139,12 +139,22 @@ named `cloudcore-host-home`.
 The simulation is `index.html` in the lab pack root, or on the unit page. The launcher is
 in the same folder. Open a terminal there.
 
-The host shell is your Ubuntu Server. It is where you do the OS work: users, packages,
-services, permissions and configuration.
+First time, use the guided start:
 
 ```bash
-./start.sh host
+./start.sh guide
 ```
+
+On Windows:
+
+```powershell
+.\start.bat guide
+```
+
+The guide opens the simulation, waits while you complete it and download the build record,
+then opens the host shell. It does not check the download. The build record is yours to
+keep for the portfolio. If you have already done the simulation, use `./start.sh host` or
+`start.bat host`.
 
 On Windows, use `start.bat`, not `start.sh`. In File Explorer, double-click `start.bat`,
 or open PowerShell in the folder and run:
@@ -157,6 +167,9 @@ If you double-click `start.bat` with no command, it shows the command list and w
 
 The simulation does not install Docker and does not run the lab. It records the install
 decisions. Section 1 and section 3 are the real setup.
+
+The host shell is your Ubuntu Server. It is where you do the OS work: users, packages,
+services, permissions and configuration.
 
 The first run builds a small Ubuntu image. When the shell opens, you are the `student`
 user. The default password for `sudo` is `cloudcore`. Change it in your first session:

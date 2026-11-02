@@ -7,6 +7,7 @@
 #
 #   ./start.sh                 show help
 #   ./start.sh m03             start the Module 03 state
+#   ./start.sh m05             start the cumulative Module 05 state (internal DNS)
 #   ./start.sh m06             start the cumulative Module 06 state
 #   ./start.sh m09             start the cumulative Module 09 state
 #   ./start.sh status          show what is running
@@ -20,7 +21,9 @@
 #   ./start.sh limit <svc> <cpus>
 #   ./start.sh stop            stop, keep volumes
 #   ./start.sh down            remove containers and networks, keep volumes
-#   ./start.sh reset <m03|m06|m09>
+#   ./start.sh reset <m03|m05|m06|m09>
+#   ./start.sh fix-m05
+#   ./start.sh break-m05
 #   ./start.sh fix-m09
 #   ./start.sh break-m09
 #   ./start.sh smoke
@@ -70,13 +73,14 @@ else
   COMPOSE=(docker compose)
 fi
 
-ALL_PROFILES=(--profile m03 --profile m06 --profile m09)
+ALL_PROFILES=(--profile m03 --profile m05 --profile m06 --profile m09)
 
 usage() {
   cat <<'EOF'
 CloudCore estate launcher
 
   ./start.sh m03             start the Module 03 state
+  ./start.sh m05             start the cumulative Module 05 state (internal DNS)
   ./start.sh m06             start the cumulative Module 06 state
   ./start.sh m09             start the cumulative Module 09 state
   ./start.sh status          show what is running
@@ -84,7 +88,9 @@ CloudCore estate launcher
   ./start.sh logs [service]  follow logs
   ./start.sh stop            stop, keep volumes
   ./start.sh down            remove containers and networks, keep volumes
-  ./start.sh reset m03|m06|m09
+  ./start.sh reset m03|m05|m06|m09
+  ./start.sh fix-m05         restore the portal DNS record
+  ./start.sh break-m05       point the portal name at the wrong address
   ./start.sh fix-m09         repair the finance share
   ./start.sh break-m09       put the finance share back into the broken state
   ./start.sh smoke           run the smoke test
@@ -106,11 +112,12 @@ EOF
 state() {
   case "$1" in
     m03) "${COMPOSE[@]}" --profile m03 up -d ;;
-    m06) "${COMPOSE[@]}" --profile m03 --profile m06 up -d ;;
-    m09) "${COMPOSE[@]}" --profile m03 --profile m06 --profile m09 up -d ;;
+    m05) "${COMPOSE[@]}" --profile m03 --profile m05 up -d ;;
+    m06) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 up -d ;;
+    m09) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m09 up -d ;;
     *)
       echo "Unknown state: ${1:-}" >&2
-      echo "Use m03, m06 or m09." >&2
+      echo "Use m03, m05, m06 or m09." >&2
       exit 1
       ;;
   esac
@@ -150,9 +157,10 @@ case "$cmd" in
     usage
     ;;
 
-  m03|m06|m09)
+  m03|m05|m06|m09)
     state "$cmd"
     case "$cmd" in
+      m05) echo "Estate is up, including the internal DNS." ;;
       m06) echo "Estate is up. Open https://localhost:8443 (expect a certificate warning)." ;;
       m09) echo "Estate is up, including the finance share." ;;
       *)   echo "Estate is up." ;;
@@ -218,12 +226,20 @@ case "$cmd" in
   reset)
     target="${1:-}"
     case "$target" in
-      m03|m06|m09) ;;
-      *) echo "Usage: ./start.sh reset m03|m06|m09" >&2; exit 1 ;;
+      m03|m05|m06|m09) ;;
+      *) echo "Usage: ./start.sh reset m03|m05|m06|m09" >&2; exit 1 ;;
     esac
     "${COMPOSE[@]}" "${ALL_PROFILES[@]}" down -v --remove-orphans
     state "$target"
     echo "Estate reset to the Module ${target#m} state."
+    ;;
+
+  fix-m05)
+    ./scenarios/m05/fix.sh
+    ;;
+
+  break-m05)
+    ./scenarios/m05/break.sh
     ;;
 
   fix-m09)

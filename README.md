@@ -25,6 +25,7 @@ git clone https://github.com/michael-borck/enterprise-estate-labs.git
 cd enterprise-estate-labs
 ./start.sh guide  # install simulation, then the Ubuntu host shell
 ./start.sh m03    # the CloudCore estate
+./start.sh m05    # the estate plus internal DNS
 ```
 
 On Windows, use `start.bat guide` and `start.bat m03`.
@@ -37,6 +38,7 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh host` | Start the Ubuntu host shell |
 | `./start.sh host reset` | Remove the host shell and its home volume |
 | `./start.sh m03` | Start the Module 03 state: web, db and tools |
+| `./start.sh m05` | Start the cumulative Module 05 state and add internal DNS |
 | `./start.sh m06` | Start the cumulative Module 06 state and add the TLS proxy |
 | `./start.sh m09` | Start the cumulative Module 09 state and add the shared volume |
 | `./start.sh status` | Show what is running |
@@ -45,7 +47,9 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh stop` | Stop the estate, keep the volumes |
 | `./start.sh down` | Remove the containers and networks, keep the volumes |
 | `./start.sh reset m09` | Remove the volumes and return to a clean Module 09 state |
-| `./start.sh smoke` | Validate all three states end to end |
+| `./start.sh fix-m05` | Restore the portal DNS record |
+| `./start.sh break-m05` | Point the portal name at the wrong address |
+| `./start.sh smoke` | Validate all four states end to end |
 
 Open <https://localhost:8443>. The certificate is issued by a local authority, so the
 browser warning is expected. That warning is part of Module 06.
@@ -63,11 +67,13 @@ configure with `./start.sh host`.
 |---|---|---|
 | 03 | Containers and limits | `db` (PostgreSQL), `web` (nginx), `tools` (network shell) |
 | 04 | Networking models | uses the Module 03 state; capture in `tools` |
+| 05 | Addressing and naming | adds the `dns` service and the portal name |
 | 06 | Web and TLS | adds `proxy` (Caddy, internal TLS) |
 | 09 | File systems and access control | adds `writer` and a shared volume with a permission fault |
 
-The states are cumulative. `./start.sh m06` also brings up Module 03. `./start.sh m09`
-also brings up Modules 03 and 06. Nothing else runs.
+The states are cumulative. `./start.sh m05` also brings up Module 03. `./start.sh m06`
+also brings up Modules 03 and 05. `./start.sh m09` also brings up 03, 05 and 06. Nothing
+else runs.
 
 ## Modules
 
@@ -76,11 +82,11 @@ also brings up Modules 03 and 06. Nothing else runs.
 | 00 | Environment setup | [`modules/module-00-setup/README.md`](modules/module-00-setup/README.md) |
 | 03 | Processes, memory and containers | [`modules/module-03-containers/LAB-GUIDE.md`](modules/module-03-containers/LAB-GUIDE.md) |
 | 04 | Networking models | [`modules/module-04-networking/LAB-GUIDE.md`](modules/module-04-networking/LAB-GUIDE.md) |
+| 05 | Addressing and naming | [`modules/module-05-naming/LAB-GUIDE.md`](modules/module-05-naming/LAB-GUIDE.md) |
 | 06 | Protocols and the web tier | [`modules/module-06-web-tls/LAB-GUIDE.md`](modules/module-06-web-tls/LAB-GUIDE.md) |
 | 09 | File systems and access control | [`modules/module-09-filesystems/LAB-GUIDE.md`](modules/module-09-filesystems/LAB-GUIDE.md) |
 
-Planned: 05 addressing and naming, 08 identity, 10 storage, 11 security and incident
-response. The host shell and install simulation are in `host/`.
+Planned: 08 identity, 10 storage, 11 security and incident response. The host shell and install simulation are in `host/`.
 
 ## Design
 

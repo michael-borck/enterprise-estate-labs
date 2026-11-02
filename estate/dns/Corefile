@@ -1,0 +1,7 @@
+estate.local:53 {
+    hosts /etc/coredns/hosts {
+        fallthrough
+    }
+    log
+    errors
+}

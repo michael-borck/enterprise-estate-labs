@@ -118,7 +118,7 @@
   .choice span { color: var(--muted); font-size: 12px; }
   .field { display: grid; gap: 6px; margin: 14px 0; }
   .field label { font-size: 13px; color: var(--muted); }
-  .field input[type="text"], .field input[type="password"], .field input[type="number"] {
+  .field input[type="text"], .field input[type="password"], .field input[type="number"], .field select {
     width: 100%;
     padding: 10px 12px;
     border-radius: 9px;
@@ -456,6 +456,23 @@
   }
   .uefi-changes { margin: 8px 0 0 18px; padding: 0; color: #d8e8f3; font-size: 12px; }
   .uefi-changes li { margin-bottom: 6px; }
+  .console-screen {
+    background: #07070a;
+    border: 1px solid #24242c;
+    border-radius: 12px;
+    padding: clamp(20px, 4vw, 40px);
+    min-height: 460px;
+    font-family: var(--mono);
+    color: #d8d8e0;
+    line-height: 1.65;
+    font-size: 13px;
+  }
+  .console-screen p { margin: 4px 0; }
+  .console-line { margin: 4px 0; }
+  .console-dots { color: #8b8b99; }
+  .console-screen .muted { color: #8b8b99; }
+  .console-prompt { color: #7bd88f; }
+  .console-cursor { color: #ffd479; }
   .boot-menu {
     display: grid; gap: 8px; margin: 14px 0;
   }
@@ -558,7 +575,7 @@
   </main>
 </div>
 
-<aside class="help-panel" id="help-panel" aria-hidden="true" aria-labelledby="help-title">
+<aside class="help-panel" id="help-panel" aria-hidden="true" aria-labelledby="help-title" inert>
   <div class="help-head">
     <h3 id="help-title">Help</h3>
     <button class="btn ghost" id="close-help" type="button">Close</button>
@@ -609,12 +626,12 @@
     { id: 'release',  label: 'Release' },
     { id: 'network',  label: 'Network' },
     { id: 'storage',  label: 'Storage' },
-    { id: 'user',     label: 'User' },
+    { id: 'user',     label: 'Profile' },
     { id: 'ssh',      label: 'SSH' },
     { id: 'packages', label: 'Packages' },
     { id: 'review',   label: 'Review' },
     { id: 'install',  label: 'Install' },
-    { id: 'desktop',  label: 'Desktop' }
+    { id: 'desktop',  label: 'First boot' }
   ];
 
   const state = {
@@ -624,6 +641,8 @@
     secureBoot: true,
     fastBoot: false,
     installed: false,
+    reinstall: false,
+    consoleLogin: false,
     memory: 2048,
     release: 'ubuntu-24.04',
     hostname: 'cloudcore-host',
@@ -648,7 +667,8 @@
   let installProgress = 0;
   let installDone = false;
   let bootTimer = null;
-  let bootCountdown = 3;
+  let bootCountdown = 5;
+  let bootPaused = false;
   let helpOpen = false;
 
   const $ = (id) => document.getElementById(id);
@@ -669,6 +689,7 @@
 
   const releaseLabel = () => ({
     'ubuntu-24.04': 'Ubuntu Server 24.04 LTS',
+    'ubuntu-26.04': 'Ubuntu Server 26.04 LTS',
     'ubuntu-22.04': 'Ubuntu Server 22.04 LTS',
     'ubuntu-25.10': 'Ubuntu Server 25.10'
   }[state.release] || state.release);
@@ -689,19 +710,19 @@
     const issues = [];
     if (id === 'release') {
       if (state.release === 'ubuntu-25.10') {
-        issues.push({ level: 'warn', text: '25.10 is an interim release with nine months of support. A server should use 24.04 LTS.' });
+        issues.push({ level: 'bad', text: '25.10 is end-of-life. Do not use it for a new host.' });
       }
       if (state.release === 'ubuntu-22.04') {
-        issues.push({ level: 'warn', text: '22.04 is still supported, but 24.04 LTS is the current long-term release for a new host.' });
+        issues.push({ level: 'warn', text: '22.04 is still supported but older. 24.04 LTS matches the lab host; 26.04 LTS is the current LTS.' });
       }
       if (state.release === 'ubuntu-24.04') {
-        issues.push({ level: 'ok', text: 'Good. 24.04 LTS is supported until 2029 on the standard cycle.' });
+        issues.push({ level: 'ok', text: 'Good. 24.04 LTS matches the lab host and is supported until 2029.' });
+      }
+      if (state.release === 'ubuntu-26.04') {
+        issues.push({ level: 'ok', text: 'Good. 26.04 LTS is the current long-term release.' });
       }
     }
     if (id === 'network') {
-      if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(state.hostname)) {
-        issues.push({ level: 'bad', text: 'The hostname must use lowercase letters, digits and hyphens, and cannot start or end with a hyphen.' });
-      }
       if (state.network === 'static') {
         if (!isCIDR(state.ip)) issues.push({ level: 'bad', text: 'The address must be IPv4 with a prefix, for example 10.0.2.15/24.' });
         if (!isIPv4(state.gateway)) issues.push({ level: 'bad', text: 'The gateway must be a valid IPv4 address.' });
@@ -714,7 +735,7 @@
     }
     if (id === 'storage') {
       const disk = Number(state.disk);
-      if (disk < 10) issues.push({ level: 'bad', text: '10 GB is too small for a server with updates, logs and containers. Use at least 20 GB.' });
+      if (disk < 10) issues.push({ level: 'bad', text: 'A disk under 10 GB is too small for a server with updates, logs and containers. Use at least 20 GB.' });
       else if (disk < 20) issues.push({ level: 'warn', text: 'This is tight. Updates and container images will fill it quickly.' });
       if (state.storage === 'manual') {
         if (Number(state.rootSize) < 10) issues.push({ level: 'bad', text: 'The root partition needs at least 10 GB.' });
@@ -725,6 +746,9 @@
       }
     }
     if (id === 'user') {
+      if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(state.hostname)) {
+        issues.push({ level: 'bad', text: 'The hostname must use lowercase letters, digits and hyphens, and cannot start or end with a hyphen.' });
+      }
       if (!/^[a-z][a-z0-9_-]{2,31}$/.test(state.username)) {
         issues.push({ level: 'bad', text: 'The username must start with a lowercase letter and use 3 to 32 lowercase letters, digits, underscores or hyphens.' });
       }
@@ -774,31 +798,8 @@
     }).join('');
   }
 
-  function releaseChoices() {
-    return `
-      <div class="grid-2">
-        ${[
-          ['ubuntu-24.04', 'Ubuntu Server 24.04 LTS', 'Long-term support. The right default.'],
-          ['ubuntu-22.04', 'Ubuntu Server 22.04 LTS', 'Older LTS. Still supported, but not the new default.'],
-          ['ubuntu-25.10', 'Ubuntu Server 25.10', 'Interim release. Nine months of support.']
-        ].map(([value, title, note]) => `
-          <label class="choice">
-            <input type="radio" name="release" data-key="release" value="${value}" ${state.release === value ? 'checked' : ''}>
-            <strong>${esc(title)}</strong>
-            <span>${esc(note)}</span>
-          </label>
-        `).join('')}
-      </div>
-    `;
-  }
-
   function networkBody() {
     return `
-      <div class="field">
-        <label for="hostname">Hostname</label>
-        <input id="hostname" data-key="hostname" type="text" value="${esc(state.hostname)}" autocomplete="off" spellcheck="false">
-        <span class="hint">The name this server uses on the network. Lowercase, no spaces.</span>
-      </div>
       <div class="grid-2">
         <label class="choice">
           <input type="radio" name="network" data-key="network" value="dhcp" ${state.network === 'dhcp' ? 'checked' : ''}>
@@ -835,12 +836,8 @@
 
   function storageBody() {
     return `
-      <div class="field">
-        <label for="disk">Disk size (GB)</label>
-        <input id="disk" data-key="disk" type="number" min="10" max="80" step="1" value="${esc(state.disk)}">
-        <span class="hint">A small server is fine. 20 GB leaves room for updates and images.</span>
-      </div>
-      <div class="grid-2">
+      <p class="hint">Disk: ${state.disk} GB, set before boot. To change it, power off and change the virtual hardware.</p>
+      <div class="grid-2" style="margin-top:14px">
         <label class="choice">
           <input type="radio" name="storage" data-key="storage" value="guided" ${state.storage === 'guided' ? 'checked' : ''}>
           <strong>Guided, use the whole disk</strong>
@@ -864,13 +861,18 @@
         </div>
         <p class="hint" id="storage-preview">Using ${partitionTotal()} GB of ${state.disk} GB (including ${EFI_SIZE} GB EFI).</p>
       ` : `
-        <p class="hint">Guided partitioning creates a ${EFI_SIZE} GB EFI system partition, the root file system and a swap file.</p>
+        <p class="hint">Guided partitioning creates a ${EFI_SIZE} GB EFI system partition, the root file system and a swap file. The real Ubuntu guided layout uses LVM with a separate <code>/boot</code> and may leave part of the volume group unallocated; this simulation keeps it simpler.</p>
       `}
     `;
   }
 
   function userBody() {
     return `
+      <div class="field">
+        <label for="hostname">Hostname</label>
+        <input id="hostname" data-key="hostname" type="text" value="${esc(state.hostname)}" autocomplete="off" spellcheck="false">
+        <span class="hint">The name this server uses on the network. Lowercase, no spaces.</span>
+      </div>
       <div class="field">
         <label for="fullname">Full name</label>
         <input id="fullname" data-key="fullname" type="text" value="${esc(state.fullname)}">
@@ -955,30 +957,36 @@
   }
 
   function desktopBody() {
+    if (!state.consoleLogin) {
+      return `
+        <div class="console-screen">
+          <p>${esc(releaseLabel())} ${esc(state.hostname)} tty1</p>
+          <p class="console-line">${esc(state.hostname)} login: <strong>${esc(state.username)}</strong></p>
+          <p class="console-line">Password: <span class="console-dots">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></p>
+          <p class="hint">The console does not echo the password.</p>
+          <div class="boot-actions">
+            <button class="btn primary" id="console-login" type="button">Log in</button>
+          </div>
+        </div>
+      `;
+    }
     return `
-      <div class="desktop">
-        <div class="desktop-top">
-          <span class="desktop-title">Activities</span>
-          <span>${esc(state.hostname)} &middot; Ubuntu Server</span>
-          <span>${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
-        </div>
-        <div class="desktop-icons">
-          <button class="desk-icon" id="open-terminal" type="button">
-            <span class="icon-tile icon-terminal">&gt;_</span>
-            <span>Terminal</span>
-          </button>
-          <button class="desk-icon" type="button" id="files-demo">
-            <span class="icon-tile icon-files">F</span>
-            <span>Files</span>
-          </button>
-          <button class="desk-icon" type="button" id="settings-demo">
-            <span class="icon-tile icon-settings">S</span>
-            <span>Settings</span>
-          </button>
-        </div>
-        <div class="desktop-note">The desktop is a mock. Open the terminal for the real commands. The launcher is in the lab pack root, the folder containing start.bat or start.sh.</div>
+      <div class="console-screen">
+        <p>Welcome to ${esc(releaseLabel())} (GNU/Linux 6.8.0-cloudcore x86_64)</p>
+        <p class="muted"> * Documentation:  https://help.ubuntu.com</p>
+        <p class="muted"> * Management:     https://landscape.canonical.com</p>
+        <p class="muted"> * Support:        https://ubuntu.com/pro</p>
+        <p>&nbsp;</p>
+        <p>System information as of ${new Date().toLocaleString()}</p>
+        <p>  System load:  0.00               Processes:             96</p>
+        <p>  Usage of /:   8.2% of ${state.disk}GB   Users logged in:       1</p>
+        <p>  Memory usage: 12%                IPv4 address for eth0: 10.0.2.15</p>
+        <p>&nbsp;</p>
+        <p>Last login: ${new Date().toLocaleString()} from 10.0.2.2</p>
+        <p><span class="console-prompt">${esc(state.username)}@${esc(state.hostname)}:~$</span> <span class="console-cursor">_</span></p>
       </div>
       <div class="footer" style="margin-top:16px">
+        <button class="btn primary" id="open-terminal" type="button">Open terminal</button>
         <button class="btn" id="download-record-3" type="button">Download build record</button>
         <button class="btn" id="start-over" type="button">Start over</button>
       </div>
@@ -988,13 +996,22 @@
   function bodyFor(id) {
     if (id === 'boot') return bootBody();
     if (id === 'release') return `
-      <h3>What are you installing?</h3>
-      <p class="lede">Choose the operating system for the CloudCore host. The host is the Ubuntu machine under the container estate.</p>
-      ${releaseChoices()}
+      <h3>The installer ISO</h3>
+      <p class="lede">You attached <strong>${esc(releaseLabel())}</strong> before boot. The installer uses the release from the ISO.</p>
+      ${state.reinstall ? '<div class="feedback" style="margin-bottom:18px"><p class="warn">The ISO is still first and attached. This will reinstall over the existing system. Remove the ISO or change the boot order to boot the disk.</p></div>' : ''}
+      <table class="summary">
+        ${summaryRow('Release', releaseLabel())}
+        ${summaryRow('Source', 'Attached ISO')}
+        ${summaryRow('Lab host', 'Ubuntu Server 24.04 LTS')}
+      </table>
+      <p class="hint" style="margin-top:16px">The release is a pre-boot decision. To change it, power off and choose a different ISO on the virtual hardware screen.</p>
+      <div class="boot-actions">
+        <button class="btn" id="change-iso" type="button">Power off and change ISO</button>
+      </div>
     `;
     if (id === 'network') return `
       <h3>Network</h3>
-      <p class="lede">The host needs an address, a route and a name. DHCP is fine for the lab. Static addressing is what you would use for a server with a fixed role.</p>
+      <p class="lede">The host needs an address and a route. DHCP is fine for the lab. Static addressing is what you would use for a server with a fixed role.</p>
       ${networkBody()}
     `;
     if (id === 'storage') return `
@@ -1003,8 +1020,8 @@
       ${storageBody()}
     `;
     if (id === 'user') return `
-      <h3>User</h3>
-      <p class="lede">Create the first administrative user. This is the account you will use for <code>sudo</code>.</p>
+      <h3>Profile</h3>
+      <p class="lede">Set the hostname and create the first administrative user. This is the account you will use for <code>sudo</code>.</p>
       ${userBody()}
     `;
     if (id === 'ssh') return `
@@ -1027,8 +1044,8 @@
       ${installBody()}
     `;
     if (id === 'desktop') return `
-      <h3>The host is ready</h3>
-      <p class="lede">This is the desktop you would see after the first boot. Open the terminal to continue on your own machine.</p>
+      <h3>First boot</h3>
+      <p class="lede">Ubuntu Server has no graphical desktop. This is the text console. Log in, then open the terminal to continue on your machine.</p>
       ${desktopBody()}
     `;
     return '';
@@ -1037,7 +1054,7 @@
   function render() {
     const step = steps[current];
     renderSteps();
-    titleEl.textContent = step.id === 'boot' ? 'Boot' : (step.label === 'Release' ? 'Choose the release' : step.label);
+    titleEl.textContent = step.id === 'boot' ? 'Boot' : (step.id === 'release' ? 'The installer ISO' : step.label);
     countEl.textContent = `Step ${current + 1} of ${steps.length}`;
     bodyEl.innerHTML = bodyFor(step.id);
     const isBoot = step.id === 'boot';
@@ -1108,7 +1125,7 @@
   function bootName(device) {
     return {
       disk: `UEFI: Virtual disk (${state.disk} GB)`,
-      iso: 'UEFI: Ubuntu Server 24.04 LTS ISO',
+      iso: `UEFI: ${releaseLabel()} ISO`,
       network: 'UEFI: Network boot (PXE)'
     }[device] || device;
   }
@@ -1117,6 +1134,7 @@
     const warnings = [];
     if (Number(state.memory) < 2048) warnings.push('1 GB is tight. The host, the runtime and the estate will be slow, and the kernel may run out of memory.');
     if (Number(state.disk) < 20) warnings.push('10 GB is tight. Updates, logs and container images will fill it quickly.');
+    if (state.release === 'ubuntu-25.10') warnings.push('25.10 is end-of-life. Choose 24.04 LTS (lab host) or 26.04 LTS.');
     return `
       <div class="boot-screen" style="justify-content:flex-start">
         <div class="post-logo">CLOUDCORE VIRTUAL PLATFORM</div>
@@ -1156,6 +1174,16 @@
             <span>Roomy. Useful if you keep many images.</span>
           </label>
         </div>
+        <div class="field">
+          <label for="release">Attached ISO</label>
+          <select id="release" data-key="release">
+            <option value="ubuntu-24.04" ${state.release === 'ubuntu-24.04' ? 'selected' : ''}>Ubuntu Server 24.04 LTS (lab host)</option>
+            <option value="ubuntu-26.04" ${state.release === 'ubuntu-26.04' ? 'selected' : ''}>Ubuntu Server 26.04 LTS (current LTS)</option>
+            <option value="ubuntu-22.04" ${state.release === 'ubuntu-22.04' ? 'selected' : ''}>Ubuntu Server 22.04 LTS (older LTS)</option>
+            <option value="ubuntu-25.10" ${state.release === 'ubuntu-25.10' ? 'selected' : ''}>Ubuntu Server 25.10 (end-of-life)</option>
+          </select>
+          <span class="hint">The ISO decides the release. 24.04 matches the lab host.</span>
+        </div>
         ${warnings.length ? `<div class="feedback" style="margin-top:16px">${warnings.map((warning) => `<p class="warn">${esc(warning)}</p>`).join('')}</div>` : ''}
         <div class="boot-actions">
           <button class="btn primary" id="power-on" type="button">Power on</button>
@@ -1168,19 +1196,21 @@
     return `
       <div class="boot-screen">
         <div class="post-logo">CLOUDCORE VIRTUAL PLATFORM</div>
-        <div class="post-sub">UEFI firmware 2.7.1 &middot; service pod 01</div>
+        <div class="post-sub">${state.installed ? 'Reboot after install &middot; UEFI firmware 2.7.1' : 'UEFI firmware 2.7.1 &middot; service pod 01'}</div>
         <div class="post-line"><span class="k">CPU</span><span class="v">CloudCore vCPU, 2 cores at 2.4 GHz</span></div>
         <div class="post-line"><span class="k">Memory</span><span class="v">${state.memory} MB</span></div>
         <div class="post-line"><span class="k">Storage</span><span class="v">${state.disk} GB virtual disk</span></div>
+        <div class="post-line"><span class="k">Installer ISO</span><span class="v">${releaseLabel()}</span></div>
         <div class="post-line"><span class="k">Network</span><span class="v">UEFI PXE over IPv4</span></div>
         <div class="post-line"><span class="k">Secure Boot</span><span class="v">${state.secureBoot ? 'Enabled' : 'Disabled'}</span></div>
         <div class="post-key">
           Press <kbd>F2</kbd> for Setup &middot; <kbd>F12</kbd> for Boot Menu
-          &middot; continuing in <strong id="boot-countdown">${bootCountdown}</strong>s
+          &middot; ${bootPaused ? 'auto-boot paused' : `auto-boot in <strong id="boot-countdown">${bootCountdown}</strong>s`}
         </div>
         <div class="boot-actions">
           <button class="btn" id="bios-enter" type="button">F2: Setup</button>
           <button class="btn" id="boot-menu" type="button">F12: Boot Menu</button>
+          <button class="btn" id="pause-countdown" type="button">${bootPaused ? 'Resume' : 'Pause'}</button>
           <button class="btn primary" id="boot-continue" type="button">Continue boot</button>
         </div>
       </div>
@@ -1325,12 +1355,12 @@
         <div class="post-logo">Boot Menu</div>
         <div class="post-sub">F12 &middot; select a boot device</div>
         ${state.installed
-          ? '<p class="boot-note">Installation complete. The installer ISO is still attached. Select the UEFI disk to boot the installed system.</p>'
+          ? '<p class="boot-note">Installation complete. The ISO is still attached. Selecting it starts the installer again; select the UEFI disk to boot the installed system.</p>'
           : '<p class="boot-note">The virtual disk is empty. Select the Ubuntu Server ISO to install.</p>'}
         <p class="hint">Use the arrow keys to move, Enter to select, or click a device.</p>
         <div class="boot-menu">
           <button class="boot-option" data-boot="iso" type="button">
-            <strong>UEFI: Ubuntu Server 24.04 LTS ISO</strong>
+            <strong>UEFI: ${releaseLabel()} ISO</strong>
             <span>The installer. Use this first.</span>
           </button>
           <button class="boot-option" data-boot="disk" type="button">
@@ -1371,8 +1401,8 @@
   function pxeBody() {
     return `
       <div class="boot-screen">
-        <div class="post-logo" style="color:#ff8a80">PXE-E61: Media test failure</div>
-        <div class="post-sub">Network boot was selected, but no PXE server answered.</div>
+        <div class="post-logo" style="color:#ff8a80">PXE-E51: No DHCP or proxyDHCP offers</div>
+        <div class="post-sub">Network boot was selected, but no DHCP or proxyDHCP offer was received.</div>
         <p>There is no PXE server in this estate. Choose the ISO to install, or the disk after installation.</p>
         <div class="boot-actions">
           <button class="btn primary" id="boot-menu" type="button">F12: Boot Menu</button>
@@ -1431,7 +1461,8 @@
 
   function startBootCountdown() {
     clearBootTimer();
-    bootCountdown = 3;
+    bootCountdown = 5;
+    if (bootPaused) return;
     const el = $('boot-countdown');
     if (el) el.textContent = String(bootCountdown);
     bootTimer = setInterval(() => {
@@ -1447,33 +1478,28 @@
 
   function continueBoot() {
     clearBootTimer();
-    const first = state.bootOrder[0];
-    if (state.installed) {
-      if (first === 'disk') {
-        current = steps.findIndex((step) => step.id === 'desktop');
+    for (const device of state.bootOrder) {
+      if (device === 'disk') {
+        if (state.installed) {
+          state.reinstall = false;
+          current = steps.findIndex((step) => step.id === 'desktop');
+          render();
+          return;
+        }
+        // An empty disk fails this entry; firmware falls through to the next device.
+        continue;
+      }
+      if (device === 'iso') {
+        state.reinstall = state.installed;
+        current = steps.findIndex((step) => step.id === 'release');
+        state.bootScreen = 'post';
         render();
         return;
       }
-      if (first === 'iso') {
-        state.bootScreen = 'bootmenu';
-        render();
-        return;
-      }
-      state.bootScreen = 'pxe';
-      render();
-      return;
+      // Network boot would time out on a real PXE attempt. The boot menu still
+      // offers it manually so the failure can be seen.
     }
-    if (first === 'iso') {
-      current = steps.findIndex((step) => step.id === 'release');
-      render();
-      return;
-    }
-    if (first === 'disk') {
-      state.bootScreen = 'noBoot';
-      render();
-      return;
-    }
-    state.bootScreen = 'pxe';
+    state.bootScreen = 'noBoot';
     render();
   }
 
@@ -1492,10 +1518,7 @@
 
   function selectBoot(device) {
     if (device === 'iso') {
-      if (state.installed) {
-        showInfo('Installer ISO is still attached', 'The installed system is on the virtual disk. Select the UEFI disk to boot it, or change the boot order in setup.');
-        return;
-      }
+      state.reinstall = state.installed;
       current = steps.findIndex((step) => step.id === 'release');
       state.bootScreen = 'post';
       render();
@@ -1507,6 +1530,7 @@
         render();
         return;
       }
+      state.reinstall = false;
       current = steps.findIndex((step) => step.id === 'desktop');
       render();
       return;
@@ -1561,6 +1585,7 @@
 
   function saveAndExit() {
     clearBootTimer();
+    bootPaused = false;
     state.bootScreen = 'post';
     render();
   }
@@ -1612,9 +1637,9 @@
     const id = steps[current].id;
     if (id === 'boot') {
       if (state.bootScreen === 'hardware') {
-        return helpSection('This screen', '<p>Before power on, choose the virtual hardware for the service pod. The default is 2 GB of memory and a 20 GB disk.</p>')
-          + helpSection('What to do', '<p>Leave the defaults unless you have a reason. 1 GB or 10 GB will be tight for the host, the runtime and the estate.</p>')
-          + helpSection('Simulation notes', '<p>The real lab host is an Ubuntu container shell. This screen is where you make the sizing decision before the firmware starts.</p>');
+        return helpSection('This screen', '<p>Before power on, choose the virtual hardware and the ISO for the service pod. The default is 2 GB of memory, a 20 GB disk and Ubuntu Server 24.04 LTS.</p>')
+          + helpSection('What to do', '<p>Leave the defaults unless you have a reason. 1 GB or 10 GB will be tight. 24.04 LTS matches the lab host; 26.04 LTS is the current LTS.</p>')
+          + helpSection('Simulation notes', '<p>The real lab host is an Ubuntu container shell. This screen is where you make the sizing and release decisions before the firmware starts.</p>');
       }
       if (state.bootScreen === 'secureFail') {
         return helpSection('This screen', '<p>Secure Boot is enabled and the unsigned test bootloader failed the signature check.</p>')
@@ -1640,31 +1665,36 @@
       }
       if (state.bootScreen === 'bootmenu') {
         return helpSection('This screen', '<p>The one-time boot menu. The first device is used for this boot only; it does not change the saved boot order.</p>')
-          + helpSection('What to do', '<p>Choose the Ubuntu Server ISO to install. After the install, choose the UEFI disk to boot the installed system.</p>')
-          + helpSection('Simulation notes', '<p>Network boot is listed because a real server offers it. There is no PXE server in this estate, so it fails.</p>');
+          + helpSection('What to do', '<p>Choose the Ubuntu Server ISO to install. After the install, choose the UEFI disk to boot the installed system. If you choose the ISO again, the installer starts over.</p>')
+          + helpSection('Simulation notes', '<p>Network boot is listed because a real server offers it. There is no PXE server in this estate, so it fails. Automatic boot skips network and falls through to the next device.</p>');
       }
       if (state.bootScreen === 'noBoot') {
         return helpSection('This screen', '<p>The firmware tried the disk first and found no operating system. That is expected before the install.</p>')
           + helpSection('What to do', '<p>Open the boot menu and choose the ISO, or change the boot order in setup.</p>');
       }
       if (state.bootScreen === 'pxe') {
-        return helpSection('This screen', '<p>Network boot was selected, but no PXE server answered. The estate has no PXE server.</p>')
+        return helpSection('This screen', '<p>Network boot was selected, but no DHCP or proxyDHCP offer was received. The estate has no PXE server.</p>')
           + helpSection('What to do', '<p>Open the boot menu and choose the ISO or the disk.</p>');
       }
-      return helpSection('This screen', '<p>This is the firmware boot screen. The disk is empty, so the default boot order will fail until you install or change the order.</p>')
-        + helpSection('What to do', '<p>Press <strong>F2</strong> for setup, <strong>F12</strong> for the boot menu, or wait for the countdown. The buttons do the same thing if the function keys do not reach the browser.</p>')
+      if (state.installed) {
+        return helpSection('This screen', '<p>The machine is rebooting after the install. The firmware follows the boot order.</p>')
+          + helpSection('What to do', '<p>If the ISO is first, it will boot the installer again. Use <strong>F2</strong> or <strong>F12</strong> to boot the disk instead. Press <strong>Pause</strong> if you need more time.</p>')
+          + helpSection('Simulation notes', '<p>The real installer asks you to remove the installation medium before rebooting. This simulation leaves the ISO attached so you can see the reinstall loop.</p>');
+      }
+      return helpSection('This screen', '<p>This is the firmware boot screen. The disk is empty, so the default boot order will fall through to the ISO.</p>')
+        + helpSection('What to do', '<p>Press <strong>F2</strong> for setup, <strong>F12</strong> for the boot menu, or wait for the 5-second auto-boot. Use <strong>Pause</strong> if you need more time. The buttons do the same thing if the function keys do not reach the browser.</p>')
         + helpSection('Simulation notes', `<p>The CPU is fixed. You chose ${state.memory} MB of memory and a ${state.disk} GB disk before power on. The real host is an Ubuntu container shell, not a virtual machine.</p>`);
     }
     const help = {
-      release: ['Choose the release. 24.04 LTS is the long-term default.', 'Use Ubuntu Server 24.04 LTS. It is the long-term release and it matches the real lab host.', 'A newer interim release has a short support window. An older LTS is still supported but not the default.'],
-      network: ['The host needs an address, a route and a name.', 'DHCP is fine for the lab. A static address is what you would use for a server with a fixed role.', 'The real host uses the container network. The address is inside the container runtime.'],
-      storage: ['The installer needs a disk layout.', 'Guided partitioning is the safe first choice. Manual lets you choose root and swap sizes.', 'The real host is a container userland, so the disk is simulated. The EFI, root and swap decisions are the lesson.'],
-      user: ['Create the administrative account.', 'Create a non-root administrative user. Root is locked; use sudo for administrative work.', 'The lab host uses student with the cloudcore password. Change the password in the host shell.'],
+      release: ['The release comes from the attached ISO.', '24.04 LTS matches the lab host. 26.04 LTS is the current LTS. 25.10 is end-of-life.', 'The release is chosen before boot. The installer cannot change it.'],
+      network: ['The host needs an address and a route.', 'DHCP is fine for the lab. A static address is what you would use for a server with a fixed role.', 'The real host uses the container network. The address is inside the container runtime.'],
+      storage: ['The installer needs a disk layout.', 'Guided partitioning is the safe first choice. Manual lets you choose root and swap sizes.', 'The disk size is set before boot and is read-only here. The EFI, root and swap decisions are the lesson.'],
+      user: ['Set the profile and the administrative account.', 'Set the hostname and create a non-root administrative user. Root is locked; use sudo.', 'The lab host uses student with the cloudcore password. Change the password in the host shell.'],
       ssh: ['Remote access for the host.', 'Install the OpenSSH server so you can administer the host remotely.', 'The container host uses a shell, not a real SSH server. The decision is the lesson.'],
       packages: ['Choose the package set.', 'Standard utilities give you the tools for the first labs. Minimal is smaller; you install more later.', 'The real host image already includes the common tools.'],
       review: ['Check the build record.', 'Check the summary. Go back if a choice is wrong.', 'Download the build record. It is your evidence for the portfolio.'],
       install: ['The installer is running.', 'The installer is copying the system, creating the user and writing the boot loader.', 'The install is simulated. The real host is an Ubuntu container shell.'],
-      desktop: ['This is the desktop after the first boot.', 'Open the terminal to continue on your machine.', 'The desktop is a mock. The real work is in the terminal.']
+      desktop: ['This is the text console after the first boot.', 'Log in as the user you created, then open the terminal to continue on your machine.', 'Ubuntu Server has no GUI. The real work is in the terminal.']
     }[id] || ['This screen', '', ''];
     return helpSection('This screen', `<p>${esc(help[0])}</p>`)
       + helpSection('What to do', `<p>${esc(help[1])}</p>`)
@@ -1679,6 +1709,7 @@
     helpOpen = !helpOpen;
     helpPanel.classList.toggle('open', helpOpen);
     helpPanel.setAttribute('aria-hidden', String(!helpOpen));
+    helpPanel.inert = !helpOpen;
     helpToggle.setAttribute('aria-expanded', String(helpOpen));
     if (helpOpen) {
       updateHelp();
@@ -1687,10 +1718,13 @@
   }
 
   function closeHelp() {
+    const wasOpen = helpOpen;
     helpOpen = false;
     helpPanel.classList.remove('open');
     helpPanel.setAttribute('aria-hidden', 'true');
+    helpPanel.inert = true;
     helpToggle.setAttribute('aria-expanded', 'false');
+    if (wasOpen) helpToggle.focus();
   }
 
   function startInstall() {
@@ -1715,10 +1749,13 @@
       state.network === 'none' ? 'Skipping network configuration...' : 'Configuring network...',
       `Creating user ${state.username}...`,
       state.ssh ? 'Installing OpenSSH server...' : 'Skipping OpenSSH server...',
-      state.network === 'none' ? 'Skipping package updates (no network)...' : 'Installing standard packages...',
+      state.network === 'none'
+        ? 'Skipping package updates (no network)...'
+        : state.packages === 'standard'
+          ? 'Installing standard packages...'
+          : 'Installing minimal packages...',
       'Installing kernel...',
-      'Installing GRUB to the EFI system partition...',
-      state.secureBoot ? 'Configuring Secure Boot chain...' : 'Secure Boot disabled: boot chain not verified...',
+      'Installing signed shim and GRUB to the EFI system partition...',
       'Finishing...'
     ];
     let lineIndex = 0;
@@ -1773,16 +1810,16 @@
       `- Packages: ${state.packages === 'standard' ? 'standard system utilities' : 'minimal'}`,
       '- Password: set in the simulation, not recorded',
       '',
-      '## Why these choices',
+      '## Your reasons',
       '',
-      '- The release is a long-term support release, so the host is supported for the life of the unit and beyond.',
-      '- The hostname identifies the service pod on the network.',
-      '- The boot order is recorded above. Use the ISO first to install, then the disk to boot the installed system.',
-      '- Secure Boot stays on. It is the normal firmware setting for a modern server.',
-      '- The network choice matches the lab. A static address is for a fixed server role.',
-      '- The storage layout leaves room for updates, logs and container images. The EFI system partition holds the boot loader.',
-      '- The user is the administrative account. Root is locked, so administrative work uses sudo.',
-      '- SSH is the normal remote-access path.',
+      'The choices above are the record. Complete these reasons in your portfolio. The simulation does not write them for you.',
+      '',
+      '- Release:',
+      '- Memory and disk:',
+      '- Boot order:',
+      '- Partitioning:',
+      '- User and SSH:',
+      '- Secure Boot:',
       '',
       '## Next step',
       '',
@@ -1843,7 +1880,8 @@
     if (id === 'install') {
       if (!installDone) return;
       state.installed = true;
-      state.bootScreen = 'bootmenu';
+      state.reinstall = false;
+      state.bootScreen = 'post';
       current = steps.findIndex((step) => step.id === 'boot');
       render();
       return;
@@ -1876,6 +1914,7 @@
     clearBootTimer();
     installProgress = 0;
     installDone = false;
+    bootPaused = false;
     closeHelp();
     closeInfo();
     closeTerminal();
@@ -1886,6 +1925,8 @@
       secureBoot: true,
       fastBoot: false,
       installed: false,
+      reinstall: false,
+      consoleLogin: false,
       memory: 2048,
       release: 'ubuntu-24.04',
       hostname: 'cloudcore-host',
@@ -1934,9 +1975,18 @@
   document.addEventListener('change', (event) => {
     const key = event.target.dataset.key;
     if (!key) return;
+    if (event.target.tagName === 'SELECT') {
+      state[key] = event.target.value;
+      if (steps[current].id === 'boot' && state.bootScreen === 'hardware') {
+        render();
+      } else {
+        updateFeedback();
+      }
+      return;
+    }
     if (event.target.type === 'radio' || event.target.type === 'checkbox') {
       state[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-      if (steps[current].id === 'boot' && state.bootScreen === 'hardware' && (key === 'memory' || key === 'disk')) {
+      if (steps[current].id === 'boot' && state.bootScreen === 'hardware' && (key === 'memory' || key === 'disk' || key === 'release')) {
         render();
       } else if (key === 'network' || key === 'storage') {
         render();
@@ -1957,12 +2007,26 @@
     if (bootBtn) { selectBoot(bootBtn.dataset.boot); return; }
     const infoBtn = target.closest('[data-info]');
     if (infoBtn) { showInfo(infoBtn.dataset.info); return; }
-    if (target.closest('#power-on')) { state.bootScreen = 'post'; render(); return; }
+    if (target.closest('#power-on')) { bootPaused = false; state.bootScreen = 'post'; render(); return; }
+    if (target.closest('#change-iso')) {
+      bootPaused = false;
+      state.bootScreen = 'hardware';
+      current = steps.findIndex((step) => step.id === 'boot');
+      render();
+      return;
+    }
+    if (target.closest('#pause-countdown')) {
+      bootPaused = !bootPaused;
+      if (bootPaused) clearBootTimer();
+      else startBootCountdown();
+      render();
+      return;
+    }
     if (target.closest('#bios-enter')) { openUefi('main'); return; }
     if (target.closest('#bios-security')) { openUefi('security'); return; }
     if (target.closest('#boot-menu')) { openBootMenu(); return; }
     if (target.closest('#boot-continue')) { continueBoot(); return; }
-    if (target.closest('#boot-post')) { clearBootTimer(); state.bootScreen = 'post'; render(); return; }
+    if (target.closest('#boot-post')) { bootPaused = false; clearBootTimer(); state.bootScreen = 'post'; render(); return; }
     if (target.closest('#toggle-secure-boot')) { toggleSecureBoot(); return; }
     if (target.closest('#toggle-fast-boot')) { toggleFastBoot(); return; }
     if (target.closest('#save-exit')) { saveAndExit(); return; }
@@ -1976,17 +2040,10 @@
       downloadRecord();
       return;
     }
+    if (target.closest('#console-login')) { state.consoleLogin = true; render(); return; }
     if (target.closest('#open-terminal')) { openTerminal(); return; }
     if (target.closest('#close-terminal')) { closeTerminal(); return; }
     if (target.closest('#start-over')) { reset(); return; }
-    if (target.closest('#files-demo')) {
-      alert('Files is a mock. The real host is the Ubuntu container shell.');
-      return;
-    }
-    if (target.closest('#settings-demo')) {
-      alert('Settings is a mock. The real host is the Ubuntu container shell.');
-      return;
-    }
     if (target.closest('#copy-commands')) {
       const text = terminalCommands().replace(/<[^>]+>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
       navigator.clipboard.writeText(text).then(() => {
@@ -1996,10 +2053,35 @@
     }
   });
 
+  function trapFocus(event, modal) {
+    const items = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   document.addEventListener('keydown', (event) => {
     const overlayOpen = $('terminal-modal').classList.contains('open')
       || $('info-modal').classList.contains('open')
       || helpPanel.classList.contains('open');
+    if (event.key === 'Tab') {
+      if ($('terminal-modal').classList.contains('open')) {
+        trapFocus(event, $('terminal-modal'));
+        return;
+      }
+      if ($('info-modal').classList.contains('open')) {
+        trapFocus(event, $('info-modal'));
+        return;
+      }
+    }
     if (event.key === 'Escape') {
       closeTerminal();
       closeInfo();

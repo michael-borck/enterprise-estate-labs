@@ -26,7 +26,10 @@ if [[ -z "${COMPOSE:-}" ]]; then
   fi
 fi
 
-ALL_PROFILES="--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10"
+export CONTAINER_ENGINE="$ENGINE"
+
+M10_PROFILES="--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10"
+ALL_PROFILES="--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 --profile m11"
 
 cleanup() {
   $COMPOSE $ALL_PROFILES down -v --remove-orphans >/dev/null 2>&1 || true
@@ -47,7 +50,7 @@ wait_for() {
 }
 
 echo "==> Cleaning any previous estate"
-$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 down -v --remove-orphans >/dev/null 2>&1 || true
+$COMPOSE $ALL_PROFILES down -v --remove-orphans >/dev/null 2>&1 || true
 
 echo "==> Validating compose file"
 $COMPOSE config >/dev/null
@@ -92,23 +95,37 @@ echo "==> Module 09: shared volume"
 $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d
 
 echo "==> Module 10: backup and restore"
-$COMPOSE $ALL_PROFILES up -d
-wait_for "backup" $COMPOSE $ALL_PROFILES exec -T backup pg_isready -h db -U estate
-$COMPOSE $ALL_PROFILES exec -T backup sh /backup/backup.sh
-$COMPOSE $ALL_PROFILES exec -T backup sh /backup/restore.sh >/dev/null
-broken_count=$($COMPOSE $ALL_PROFILES exec -T backup psql -h db -U estate -d estate_restore -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
+$COMPOSE $M10_PROFILES up -d
+wait_for "backup" $COMPOSE $M10_PROFILES exec -T backup pg_isready -h db -U estate
+$COMPOSE $M10_PROFILES exec -T backup sh /backup/backup.sh
+$COMPOSE $M10_PROFILES exec -T backup sh /backup/restore.sh >/dev/null
+broken_count=$($COMPOSE $M10_PROFILES exec -T backup psql -h db -U estate -d estate_restore -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
 if [[ "$broken_count" != "0" ]]; then
   echo "the schema-only backup should restore zero rows, got ${broken_count}" >&2
   exit 1
 fi
-$COMPOSE $ALL_PROFILES exec -T backup sh /backup/backup.good.sh
-$COMPOSE $ALL_PROFILES exec -T backup sh /backup/restore.sh >/dev/null
-live_count=$($COMPOSE $ALL_PROFILES exec -T backup psql -h db -U estate -d estate -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
-restored_count=$($COMPOSE $ALL_PROFILES exec -T backup psql -h db -U estate -d estate_restore -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
+$COMPOSE $M10_PROFILES exec -T backup sh /backup/backup.good.sh
+$COMPOSE $M10_PROFILES exec -T backup sh /backup/restore.sh >/dev/null
+live_count=$($COMPOSE $M10_PROFILES exec -T backup psql -h db -U estate -d estate -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
+restored_count=$($COMPOSE $M10_PROFILES exec -T backup psql -h db -U estate -d estate_restore -tAc 'SELECT count(*) FROM tickets;' | tr -d '[:space:]')
 if [[ "$live_count" -lt 1 || "$live_count" != "$restored_count" ]]; then
   echo "restore count ${restored_count} does not match live count ${live_count}" >&2
   exit 1
 fi
+
+echo "==> Module 11: security and incident response"
+$COMPOSE $ALL_PROFILES up -d
+wait_for "logs" $COMPOSE $ALL_PROFILES exec -T logs test -f /logs/security.log
+$COMPOSE $ALL_PROFILES exec -T tools curl -fsS http://web/admin/config.txt | grep -q 'DB_PASSWORD=estate-demo'
+leak_mode=$($COMPOSE $ALL_PROFILES exec -T logs stat -c '%a' /logs/db_password | tr -d '[:space:]')
+if [[ "$leak_mode" != "644" ]]; then
+  echo "expected the demo secret to start at mode 644, got ${leak_mode}" >&2
+  exit 1
+fi
+./scenarios/m11/fix.sh >/dev/null
+./scenarios/m11/check.sh >/dev/null
+./scenarios/m11/break.sh >/dev/null
+$COMPOSE $ALL_PROFILES exec -T tools curl -fsS http://web/admin/config.txt | grep -q 'DB_PASSWORD=estate-demo'
 
 $COMPOSE ps
 

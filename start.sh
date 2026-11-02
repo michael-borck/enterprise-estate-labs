@@ -12,6 +12,7 @@
 #   ./start.sh m08             start the cumulative Module 08 state (identity)
 #   ./start.sh m09             start the cumulative Module 09 state
 #   ./start.sh m10             start the cumulative Module 10 state (backup and restore)
+#   ./start.sh m11             start the cumulative Module 11 state (security and logs)
 #   ./start.sh status          show what is running
 #   ./start.sh console         shell on the tools container
 #   ./start.sh logs [service]  follow logs
@@ -23,7 +24,7 @@
 #   ./start.sh limit <svc> <cpus>
 #   ./start.sh stop            stop, keep volumes
 #   ./start.sh down            remove containers and networks, keep volumes
-#   ./start.sh reset <m03|m05|m06|m08|m09|m10>
+#   ./start.sh reset <m03|m05|m06|m08|m09|m10|m11>
 #   ./start.sh fix-m05
 #   ./start.sh break-m05
 #   ./start.sh fix-m08
@@ -32,6 +33,9 @@
 #   ./start.sh break-m09
 #   ./start.sh fix-m10
 #   ./start.sh break-m10
+#   ./start.sh fix-m11
+#   ./start.sh break-m11
+#   ./start.sh check-m11
 #   ./start.sh smoke
 #   ./start.sh pull
 #   ./start.sh guide           open the install simulation, then the host shell
@@ -79,7 +83,7 @@ else
   COMPOSE=(docker compose)
 fi
 
-ALL_PROFILES=(--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10)
+ALL_PROFILES=(--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 --profile m11)
 
 usage() {
   cat <<'EOF'
@@ -91,12 +95,13 @@ CloudCore estate launcher
   ./start.sh m08             start the cumulative Module 08 state (identity)
   ./start.sh m09             start the cumulative Module 09 state
   ./start.sh m10             start the cumulative Module 10 state (backup and restore)
+  ./start.sh m11             start the cumulative Module 11 state (security and logs)
   ./start.sh status          show what is running
   ./start.sh console         shell on the tools container
   ./start.sh logs [service]  follow logs
   ./start.sh stop            stop, keep volumes
   ./start.sh down            remove containers and networks, keep volumes
-  ./start.sh reset m03|m05|m06|m08|m09|m10
+  ./start.sh reset m03|m05|m06|m08|m09|m10|m11
   ./start.sh fix-m05         restore the portal DNS record
   ./start.sh break-m05       point the portal name at the wrong address
   ./start.sh fix-m08         restore the reporting service group membership
@@ -105,6 +110,9 @@ CloudCore estate launcher
   ./start.sh break-m09       put the finance share back into the broken state
   ./start.sh fix-m10         restore the backup command
   ./start.sh break-m10       put the backup back into the schema-only fault
+  ./start.sh fix-m11         close the admin leak and rotate the secret
+  ./start.sh break-m11       reintroduce the admin leak and the weak secret mode
+  ./start.sh check-m11       verify the leak is closed and the secret is rotated
   ./start.sh smoke           run the smoke test
   ./start.sh pull            pull the images
   ./start.sh guide           open the install simulation, then the host shell
@@ -129,9 +137,10 @@ state() {
     m08) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 up -d ;;
     m09) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d ;;
     m10) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 up -d ;;
+    m11) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 --profile m11 up -d ;;
     *)
       echo "Unknown state: ${1:-}" >&2
-      echo "Use m03, m05, m06, m08, m09 or m10." >&2
+      echo "Use m03, m05, m06, m08, m09, m10 or m11." >&2
       exit 1
       ;;
   esac
@@ -171,7 +180,7 @@ case "$cmd" in
     usage
     ;;
 
-  m03|m05|m06|m08|m09|m10)
+  m03|m05|m06|m08|m09|m10|m11)
     state "$cmd"
     case "$cmd" in
       m05) echo "Estate is up, including the internal DNS." ;;
@@ -179,6 +188,7 @@ case "$cmd" in
       m08) echo "Estate is up, including the identity service." ;;
       m09) echo "Estate is up, including the finance share." ;;
       m10) echo "Estate is up, including the backup and restore service." ;;
+      m11) echo "Estate is up, including the security log and the incident scenario." ;;
       *)   echo "Estate is up." ;;
     esac
     ;;
@@ -247,8 +257,8 @@ case "$cmd" in
   reset)
     target="${1:-}"
     case "$target" in
-      m03|m05|m06|m08|m09|m10) ;;
-      *) echo "Usage: ./start.sh reset m03|m05|m06|m08|m09|m10" >&2; exit 1 ;;
+      m03|m05|m06|m08|m09|m10|m11) ;;
+      *) echo "Usage: ./start.sh reset m03|m05|m06|m08|m09|m10|m11" >&2; exit 1 ;;
     esac
     "${COMPOSE[@]}" "${ALL_PROFILES[@]}" down -v --remove-orphans
     state "$target"
@@ -289,6 +299,18 @@ case "$cmd" in
 
   break-m10)
     ./scenarios/m10/break.sh
+    ;;
+
+  fix-m11)
+    ./scenarios/m11/fix.sh
+    ;;
+
+  break-m11)
+    ./scenarios/m11/break.sh
+    ;;
+
+  check-m11)
+    ./scenarios/m11/check.sh
     ;;
 
   smoke)

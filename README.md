@@ -1,7 +1,7 @@
 # Enterprise Estate Labs
 
-> **Status:** prototype. The Module 03, 05, 06, 08, 09 and 10 states are built and tested.
-> The remaining state follows once the cumulative-state pattern is proven in a real lab.
+> **Status:** prototype. The Module 03, 05, 06, 08, 09, 10 and 11 states are built and
+> tested. The lab estate now covers the full ISYS2008 arc.
 
 A self-contained, container-based enterprise estate for a first course in enterprise
 technology. Students build, operate and secure one Linux and container estate across
@@ -28,6 +28,7 @@ cd enterprise-estate-labs
 ./start.sh m05    # the estate plus internal DNS
 ./start.sh m08    # the estate plus identity and access
 ./start.sh m10    # the estate plus backup and restore
+./start.sh m11    # the estate plus security and incident response
 ```
 
 On Windows, use `start.bat guide` and `start.bat m03`.
@@ -45,6 +46,7 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh m08` | Start the cumulative Module 08 state and add identity and access |
 | `./start.sh m09` | Start the cumulative Module 09 state and add the shared volume |
 | `./start.sh m10` | Start the cumulative Module 10 state and add backup and restore |
+| `./start.sh m11` | Start the cumulative Module 11 state and add security logging |
 | `./start.sh status` | Show what is running |
 | `./start.sh console` | Shell on the tools container |
 | `./start.sh logs` | Follow the logs |
@@ -57,7 +59,10 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh break-m08` | Remove the reporting service from the reporting group |
 | `./start.sh fix-m10` | Restore the backup command to include data |
 | `./start.sh break-m10` | Put the backup back into the schema-only fault |
-| `./start.sh smoke` | Validate all six states end to end |
+| `./start.sh fix-m11` | Close the admin leak and rotate the secret |
+| `./start.sh break-m11` | Reintroduce the admin leak and the weak secret mode |
+| `./start.sh check-m11` | Verify the leak is closed and the secret is rotated |
+| `./start.sh smoke` | Validate all seven states end to end |
 
 Open <https://localhost:8443>. The certificate is issued by a local authority, so the
 browser warning is expected. That warning is part of Module 06.
@@ -80,11 +85,13 @@ configure with `./start.sh host`.
 | 08 | Identity and access | adds `identity` with users, groups, reports and a sudo rule |
 | 09 | File systems and access control | adds `writer` and a shared volume with a permission fault |
 | 10 | Storage, virtualisation and cloud | adds `backup` and a backup volume with a schema-only fault |
+| 11 | Security and incident response | adds `logs`, a security log, an exposed admin page and a weak secret |
 
 The states are cumulative. `./start.sh m05` also brings up Module 03. `./start.sh m06`
 also brings up Modules 03 and 05. `./start.sh m08` also brings up 03, 05 and 06.
 `./start.sh m09` also brings up 03, 05, 06 and 08. `./start.sh m10` brings up all of them
-and adds backup and restore. Nothing else runs.
+and adds backup and restore. `./start.sh m11` brings up the full estate and adds the
+security incident. Nothing else runs.
 
 ## Modules
 
@@ -98,13 +105,15 @@ and adds backup and restore. Nothing else runs.
 | 08 | Identity and access | [`modules/module-08-identity/LAB-GUIDE.md`](modules/module-08-identity/LAB-GUIDE.md) |
 | 09 | File systems and access control | [`modules/module-09-filesystems/LAB-GUIDE.md`](modules/module-09-filesystems/LAB-GUIDE.md) |
 | 10 | Storage, virtualisation and cloud | [`modules/module-10-storage/LAB-GUIDE.md`](modules/module-10-storage/LAB-GUIDE.md) |
+| 11 | Security and incident response | [`modules/module-11-security/LAB-GUIDE.md`](modules/module-11-security/LAB-GUIDE.md) |
 
-Planned: 11 security and incident response. The host shell and install simulation are in `host/`.
+The host shell and install simulation are in `host/`. The estate covers the full arc; a new
+module is added as a new state, not as a separate topology.
 
 ## Design
 
 - **One estate, cumulative states.** Module numbers are states, not independent labs.
-- **One compose file.** Services are selected by profiles `m03`, `m05`, `m06`, `m08`, `m09`, `m10`.
+- **One compose file.** Services are selected by profiles `m03`, `m05`, `m06`, `m08`, `m09`, `m10`, `m11`.
 - **Resettable.** `./start.sh reset mNN` removes volumes and returns to that state.
 - **Offline-friendly.** Images are prebuilt. The only external access is the initial pull.
 - **No host bind mounts for data.** Named volumes keep the labs portable across macOS,

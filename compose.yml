@@ -31,6 +31,7 @@ services:
         condition: service_healthy
     volumes:
       - ./estate/web/index.html:/usr/share/nginx/html/index.html:ro
+      - ./estate/web/admin:/usr/share/nginx/html/admin:ro
     networks:
       estate:
         ipv4_address: 172.28.0.10
@@ -92,6 +93,26 @@ services:
     networks: [estate]
     command: ["sleep", "infinity"]
 
+  logs:
+    image: alpine:3.20
+    profiles: ["m11"]
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /logs
+        if [ ! -f /logs/.seeded ]; then
+          cp /seed/security.log /logs/security.log
+          cp /seed/db_password /logs/db_password
+          chmod 644 /logs/db_password
+          touch /logs/.seeded
+        fi
+        exec sleep infinity
+    volumes:
+      - security-data:/logs
+      - ./estate/security:/seed:ro
+    networks: [estate]
+
   writer:
     image: alpine:3.20
     profiles: ["m09"]
@@ -121,3 +142,4 @@ volumes:
   caddy-config:
   share-data:
   backup-data:
+  security-data:

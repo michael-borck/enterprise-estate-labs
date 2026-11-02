@@ -18,7 +18,7 @@ weeks follow the 2026 calendar shape (Weeks 1-7, tuition-free Weeks 8-9, teachin
 | 08 | Identity and access | 08 | 10 | Users, groups, service accounts, least privilege (`m08`) |
 | 09 | File systems and access control | 09 | 11 | Shared volume, ownership, permission fault |
 | 10 | Storage, virtualisation and cloud | 10 | 12 | Backup and restore, schema-only fault (`m10`) |
-| 11 | Security, privacy and incident response | 11 | 13 | Planned |
+| 11 | Security, privacy and incident response | 11 | 13 | Security log, exposed admin page, secret rotation (`m11`) |
 
 The unit's `COVERAGE_MATRIX.md` is the authoritative mapping for assessment. This file
 is the lab runner's view of the same calendar.

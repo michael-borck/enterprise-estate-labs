@@ -1,0 +1,2 @@
+DB_PASSWORD=estate-demo
+ADMIN_TOKEN=cloudcore-admin-2026

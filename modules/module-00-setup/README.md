@@ -136,8 +136,8 @@ named `cloudcore-host-home`.
 
 ## 4. Start the host shell
 
-The simulation is at `host/install-simulation.html` in the lab pack, or on the unit page.
-The launcher is in the lab pack root, one level above that file. Open a terminal there.
+The simulation is `index.html` in the lab pack root, or on the unit page. The launcher is
+in the same folder. Open a terminal there.
 
 The host shell is your Ubuntu Server. It is where you do the OS work: users, packages,
 services, permissions and configuration.
@@ -172,8 +172,7 @@ Your home directory is kept between sessions. To start completely clean:
 ```
 
 The install simulation on your unit page shows the choices behind this host: the release,
-the disk layout, the user, SSH and the package set. The same file is in the lab pack at
-`host/install-simulation.html`.
+the disk layout, the user, SSH and the package set. The same file is `index.html` in the lab pack root.
 
 ## 5. Start the estate
 

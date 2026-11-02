@@ -52,8 +52,8 @@ browser warning is expected. That warning is part of Module 06.
 ## The host
 
 The host is an Ubuntu container shell. The operating-system install is a browser
-simulation: open [`host/install-simulation.html`](host/install-simulation.html). The real
-host is the userland you configure with `./start.sh host`.
+simulation: open [`index.html`](index.html) in the lab pack root. The real host is the
+userland you configure with `./start.sh host`.
 
 ## What runs
 

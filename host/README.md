@@ -9,7 +9,7 @@ afterwards.
 | File | Purpose |
 |---|---|
 | `Dockerfile` | Builds `cloudcore-host:latest`: Ubuntu 24.04 with `sudo`, common tools and a `student` user |
-| `install-simulation.html` | The browser-based install exercise: release, network, storage, user, SSH and packages |
+| `../index.html` | The browser-based install exercise: release, network, storage, user, SSH and packages |
 | `../start.sh host` | Builds the image on first use and opens the shell |
 | `../start.sh host reset` | Removes the shell and its home volume |
 
@@ -51,4 +51,5 @@ configuration work.
 The default `sudo` password is `cloudcore`. Change it with `passwd`. Your home directory is
 kept in the `cloudcore-host-home` volume.
 
-Open `install-simulation.html` in a browser to walk through the install decisions first.
+Open `../index.html` in a browser to walk through the install decisions first. It sits in
+the lab pack root, next to `start.bat` and `start.sh`.

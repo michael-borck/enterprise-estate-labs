@@ -1687,7 +1687,7 @@
     }
     const help = {
       release: ['The release comes from the attached ISO.', '24.04 LTS matches the lab host. 26.04 LTS is the current LTS. 25.10 is end-of-life.', 'The release is chosen before boot. The installer cannot change it.'],
-      network: ['The host needs an address and a route.', 'DHCP is fine for the lab. A static address is what you would use for a server with a fixed role.', 'The real host uses the container network. The address is inside the container runtime.'],
+      network: ['The host needs an address and a route.', 'DHCP is fine for the lab. A static address is what you would use for a server with a fixed role.', 'The real installer also asks for keyboard, proxy/mirror and Ubuntu Pro; this simulation accepts the defaults. The real host uses the container network.'],
       storage: ['The installer needs a disk layout.', 'Guided partitioning is the safe first choice. Manual lets you choose root and swap sizes.', 'The disk size is set before boot and is read-only here. The EFI, root and swap decisions are the lesson.'],
       user: ['Set the profile and the administrative account.', 'Set the hostname and create a non-root administrative user. Root is locked; use sudo.', 'The lab host uses student with the cloudcore password. Change the password in the host shell.'],
       ssh: ['Remote access for the host.', 'Install the OpenSSH server so you can administer the host remotely.', 'The container host uses a shell, not a real SSH server. The decision is the lesson.'],

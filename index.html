@@ -286,7 +286,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    z-index: 20;
+    z-index: 40;
   }
   .modal.open { display: flex; }
   .modal-card {
@@ -304,6 +304,208 @@
   }
   .modal-head h3 { margin: 0; font-size: 16px; }
   .small { font-size: 12px; color: var(--muted); }
+  /* Boot, UEFI and help */
+  .topline-actions {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .topline-actions .btn { padding: 7px 12px; font-size: 12px; }
+  .footer.hidden { display: none; }
+  .boot-screen {
+    background: #050507;
+    border: 1px solid #24242c;
+    border-radius: 12px;
+    padding: clamp(20px, 4vw, 42px);
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-family: var(--mono);
+    color: #d8d8e0;
+  }
+  .post-logo {
+    color: #f1f1f4;
+    font-weight: 700;
+    font-size: clamp(18px, 2.4vw, 26px);
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .post-sub { color: #8b8b99; font-size: 12px; margin-bottom: 28px; }
+  .post-line { font-size: 13px; margin: 4px 0; }
+  .post-line .k { color: #8b8b99; display: inline-block; min-width: 180px; }
+  .post-line .v { color: #e8e8ef; }
+  .post-key {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid #24242c;
+    color: #ffd479;
+    font-size: 13px;
+  }
+  .post-key kbd, .uefi-key {
+    display: inline-block;
+    border: 1px solid #4a4a55;
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: #f1f1f4;
+    background: #1a1a20;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .boot-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .uefi {
+    background: #0d1a26;
+    border: 1px solid #24405a;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 460px;
+    color: #e6f0f7;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .uefi-top {
+    display: flex; justify-content: space-between; gap: 12px;
+    background: #13283a;
+    padding: 10px 14px;
+    border-bottom: 1px solid #24405a;
+    color: #9fc2dd;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .uefi-tabs {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    background: #0a1420;
+    padding: 6px 8px 0;
+    border-bottom: 1px solid #24405a;
+  }
+  .uefi-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    color: #9fb6c7;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    border-radius: 6px 6px 0 0;
+  }
+  .uefi-tab:hover { color: #fff; background: #13283a; }
+  .uefi-tab.active {
+    background: #0d1a26;
+    border-color: #24405a;
+    color: #fff;
+  }
+  .uefi-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+  .uefi-pane { padding: 18px 20px; }
+  .uefi-side {
+    border-left: 1px solid #24405a;
+    padding: 18px 16px;
+    color: #9fb6c7;
+    font-size: 11.5px;
+    line-height: 1.55;
+  }
+  .uefi-side h4 {
+    color: #d8e8f3;
+    font-family: var(--sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin: 0 0 8px;
+  }
+  .uefi-side p { margin: 0 0 10px; }
+  .uefi-title { color: #fff; font-size: 13px; margin: 0 0 14px; }
+  .uefi-table { width: 100%; border-collapse: collapse; }
+  .uefi-table th, .uefi-table td {
+    text-align: left; padding: 7px 8px; border-bottom: 1px solid #1b3246;
+    vertical-align: top;
+  }
+  .uefi-table th { color: #8fb0c7; font-weight: 400; width: 42%; }
+  .uefi-table td { color: #f1f7fb; }
+  .uefi-table tr.selectable td { cursor: pointer; }
+  .uefi-table tr.selectable:hover td { background: #13283a; }
+  .uefi-value-btn {
+    background: transparent; border: 0; color: #ffd479; padding: 0;
+    font-family: var(--mono); font-size: 12.5px; cursor: pointer;
+  }
+  .uefi-value-btn:hover { text-decoration: underline; }
+  .boot-order { display: grid; gap: 6px; margin: 10px 0 16px; }
+  .boot-item {
+    display: flex; justify-content: space-between; gap: 10px; align-items: center;
+    background: #0a1420; border: 1px solid #24405a; border-radius: 7px;
+    padding: 9px 11px;
+  }
+  .boot-item.first { border-color: #4f8fbf; }
+  .boot-item .name { color: #e6f0f7; }
+  .boot-item .rank { color: #8fb0c7; font-size: 11px; }
+  .boot-move { display: flex; gap: 4px; }
+  .boot-move button {
+    border: 1px solid #34556e; background: #13283a; color: #d8e8f3;
+    border-radius: 5px; padding: 3px 8px; cursor: pointer; font-family: var(--mono);
+  }
+  .boot-move button:hover { background: #1b3a52; }
+  .boot-move button:disabled { opacity: .35; cursor: not-allowed; }
+  .uefi-footer {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border-top: 1px solid #24405a;
+    padding: 10px 16px;
+    color: #8fb0c7;
+    font-size: 11px;
+  }
+  .boot-menu {
+    display: grid; gap: 8px; margin: 14px 0;
+  }
+  .boot-option {
+    display: grid; gap: 3px; text-align: left;
+    background: #0a1420; border: 1px solid #24405a; border-radius: 8px;
+    padding: 12px 14px; cursor: pointer;
+    color: #e6f0f7; font-family: var(--mono);
+  }
+  .boot-option:hover { background: #13283a; border-color: #4f8fbf; }
+  .boot-option strong { font-size: 12.5px; }
+  .boot-option span { color: #8fb0c7; font-size: 11px; }
+  .boot-note { color: #ffd479; font-size: 12px; margin: 12px 0; }
+  .help-panel {
+    position: fixed; top: 0; right: 0;
+    width: min(390px, 92vw);
+    height: 100vh;
+    background: #1d1d22;
+    border-left: 1px solid var(--line);
+    padding: 22px;
+    overflow: auto;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform .2s ease, visibility .2s;
+    z-index: 30;
+    box-shadow: -20px 0 50px rgba(0,0,0,.35);
+  }
+  .help-panel.open { transform: translateX(0); visibility: visible; }
+  .help-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .help-head h3 { margin: 0; font-size: 16px; }
+  .help-section { margin-bottom: 18px; }
+  .help-section h4 {
+    margin: 0 0 6px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted);
+  }
+  .help-section p { margin: 0 0 8px; font-size: 13px; color: #d8d8e0; }
+  .help-section ul { margin: 6px 0 0 18px; padding: 0; font-size: 13px; color: #d8d8e0; }
+  .help-section li { margin-bottom: 5px; }
+  .help-section code { color: var(--accent-2); font-family: var(--mono); font-size: 12px; }
+  .info-card { width: min(560px, 100%); }
+  .info-card p { margin: 0 0 10px; color: #d8d8e0; font-size: 14px; }
+  .info-card ul { margin: 6px 0 12px 18px; color: #d8d8e0; font-size: 13px; }
+
+  @media (max-width: 980px) {
+    .uefi-layout { grid-template-columns: 1fr; }
+    .uefi-side { border-left: 0; border-top: 1px solid #24405a; }
+  }
   @media (max-width: 820px) {
     .app { grid-template-columns: 1fr; }
     .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 18px; }
@@ -336,7 +538,10 @@
         <div class="kicker">Ubuntu Server install</div>
         <h2 id="step-title">Choose the release</h2>
       </div>
-      <div class="small" id="step-count">Step 1 of 9</div>
+      <div class="topline-actions">
+        <div class="small" id="step-count">Step 1 of 10</div>
+        <button class="btn ghost" id="help-toggle" type="button" aria-expanded="false">Help</button>
+      </div>
     </div>
 
     <section class="panel">
@@ -344,11 +549,29 @@
       <div class="feedback" id="feedback" aria-live="polite"></div>
     </section>
 
-    <div class="footer">
+    <div class="footer" id="nav-footer">
       <button class="btn ghost" id="back">Back</button>
       <button class="btn primary" id="next">Next</button>
     </div>
   </main>
+</div>
+
+<aside class="help-panel" id="help-panel" aria-hidden="true" aria-labelledby="help-title">
+  <div class="help-head">
+    <h3 id="help-title">Help</h3>
+    <button class="btn ghost" id="close-help" type="button">Close</button>
+  </div>
+  <div id="help-content"></div>
+</aside>
+
+<div class="modal" id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-title">
+  <div class="modal-card info-card">
+    <div class="modal-head">
+      <h3 id="info-title">Simulation note</h3>
+      <button class="btn ghost" id="close-info" type="button">Close</button>
+    </div>
+    <div id="info-body"></div>
+  </div>
 </div>
 
 <div class="modal" id="terminal-modal" role="dialog" aria-modal="true" aria-labelledby="terminal-title">
@@ -377,7 +600,10 @@
 (function () {
   'use strict';
 
+  const EFI_SIZE = 1;
+
   const steps = [
+    { id: 'boot',     label: 'Boot' },
     { id: 'release',  label: 'Release' },
     { id: 'network',  label: 'Network' },
     { id: 'storage',  label: 'Storage' },
@@ -390,6 +616,12 @@
   ];
 
   const state = {
+    bootScreen: 'post',
+    biosTab: 'main',
+    bootOrder: ['disk', 'iso', 'network'],
+    secureBoot: true,
+    fastBoot: false,
+    installed: false,
     release: 'ubuntu-24.04',
     hostname: 'cloudcore-host',
     network: 'dhcp',
@@ -398,7 +630,7 @@
     dns: '10.0.2.3',
     storage: 'guided',
     disk: 20,
-    rootSize: 18,
+    rootSize: 17,
     swap: 2,
     fullname: 'CloudCore Student',
     username: 'student',
@@ -412,6 +644,9 @@
   let installTimer = null;
   let installProgress = 0;
   let installDone = false;
+  let bootTimer = null;
+  let bootCountdown = 3;
+  let helpOpen = false;
 
   const $ = (id) => document.getElementById(id);
   const stepsEl = $('steps');
@@ -421,6 +656,9 @@
   const feedbackEl = $('feedback');
   const backEl = $('back');
   const nextEl = $('next');
+  const footerEl = $('nav-footer');
+  const helpPanel = $('help-panel');
+  const helpToggle = $('help-toggle');
 
   const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -432,7 +670,7 @@
     'ubuntu-25.10': 'Ubuntu Server 25.10'
   }[state.release] || state.release);
 
-  const partitionTotal = () => Number(state.rootSize || 0) + Number(state.swap || 0);
+  const partitionTotal = () => EFI_SIZE + Number(state.rootSize || 0) + Number(state.swap || 0);
 
   function isIPv4(value) {
     const parts = String(value).split('.');
@@ -465,6 +703,8 @@
         if (!isCIDR(state.ip)) issues.push({ level: 'bad', text: 'The address must be IPv4 with a prefix, for example 10.0.2.15/24.' });
         if (!isIPv4(state.gateway)) issues.push({ level: 'bad', text: 'The gateway must be a valid IPv4 address.' });
         if (!isIPv4(state.dns)) issues.push({ level: 'bad', text: 'The DNS server must be a valid IPv4 address.' });
+      } else if (state.network === 'none') {
+        issues.push({ level: 'warn', text: 'The install can continue without a network, but package updates and downloads will fail.' });
       } else {
         issues.push({ level: 'ok', text: 'DHCP is a reasonable default. The host will get an address from the network.' });
       }
@@ -567,6 +807,11 @@
           <strong>Static address</strong>
           <span>You choose the address, gateway and DNS.</span>
         </label>
+        <label class="choice">
+          <input type="radio" name="network" data-key="network" value="none" ${state.network === 'none' ? 'checked' : ''}>
+          <strong>No network</strong>
+          <span>Install offline. Updates and downloads will fail.</span>
+        </label>
       </div>
       ${state.network === 'static' ? `
         <div class="field">
@@ -605,6 +850,7 @@
         </label>
       </div>
       ${state.storage === 'manual' ? `
+        <p class="hint">The EFI system partition is fixed at ${EFI_SIZE} GB. It holds the boot loader.</p>
         <div class="field">
           <label for="rootSize">Root partition (GB)</label>
           <input id="rootSize" data-key="rootSize" type="number" min="10" max="80" step="1" value="${esc(state.rootSize)}">
@@ -613,8 +859,10 @@
           <label for="swap">Swap (GB)</label>
           <input id="swap" data-key="swap" type="number" min="0" max="16" step="1" value="${esc(state.swap)}">
         </div>
-        <p class="hint" id="storage-preview">Using ${partitionTotal()} GB of ${state.disk} GB.</p>
-      ` : ''}
+        <p class="hint" id="storage-preview">Using ${partitionTotal()} GB of ${state.disk} GB (including ${EFI_SIZE} GB EFI).</p>
+      ` : `
+        <p class="hint">Guided partitioning creates a ${EFI_SIZE} GB EFI system partition, the root file system and a swap file.</p>
+      `}
     `;
   }
 
@@ -637,6 +885,7 @@
         <label for="confirm">Confirm password</label>
         <input id="confirm" data-key="confirm" type="password" value="${esc(state.confirm)}" autocomplete="new-password">
       </div>
+      <p class="hint">Root is locked. This user is the administrative account and uses <code>sudo</code>. The lab host uses <code>student</code> with the <code>cloudcore</code> password.</p>
     `;
   }
 
@@ -677,8 +926,10 @@
       <table class="summary">
         ${summaryRow('Release', releaseLabel())}
         ${summaryRow('Hostname', state.hostname)}
-        ${summaryRow('Network', state.network === 'dhcp' ? 'DHCP' : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`)}
-        ${summaryRow('Storage', state.storage === 'guided' ? `Guided, ${state.disk} GB disk` : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap on ${state.disk} GB disk`)}
+        ${summaryRow('Boot order', state.bootOrder.map(bootName).join(' -> '))}
+        ${summaryRow('Secure Boot', state.secureBoot ? 'Enabled' : 'Disabled')}
+        ${summaryRow('Network', state.network === 'dhcp' ? 'DHCP' : state.network === 'none' ? 'No network' : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`)}
+        ${summaryRow('Storage', state.storage === 'guided' ? `Guided, ${state.disk} GB disk (EFI + root + swap)` : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap + ${EFI_SIZE} GB EFI on ${state.disk} GB disk`)}
         ${summaryRow('User', `${state.fullname} (${state.username})`)}
         ${summaryRow('SSH', state.ssh ? 'OpenSSH server' : 'Not installed')}
         ${summaryRow('Packages', state.packages === 'standard' ? 'Standard system utilities' : 'Minimal')}
@@ -731,6 +982,7 @@
   }
 
   function bodyFor(id) {
+    if (id === 'boot') return bootBody();
     if (id === 'release') return `
       <h3>What are you installing?</h3>
       <p class="lede">Choose the operating system for the CloudCore host. The host is the Ubuntu machine under the container estate.</p>
@@ -781,11 +1033,21 @@
   function render() {
     const step = steps[current];
     renderSteps();
-    titleEl.textContent = step.label === 'Release' ? 'Choose the release' : step.label;
+    titleEl.textContent = step.id === 'boot' ? 'Boot' : (step.label === 'Release' ? 'Choose the release' : step.label);
     countEl.textContent = `Step ${current + 1} of ${steps.length}`;
     bodyEl.innerHTML = bodyFor(step.id);
+    const isBoot = step.id === 'boot';
+    footerEl.classList.toggle('hidden', isBoot);
+    feedbackEl.style.display = isBoot ? 'none' : '';
+    if (isBoot) {
+      updateHelp();
+      if (state.bootScreen === 'post') startBootCountdown();
+      else clearBootTimer();
+      return;
+    }
+    clearBootTimer();
     updateFeedback();
-    backEl.disabled = current === 0 || step.id === 'install';
+    backEl.disabled = current === 0 || step.id === 'install' || step.id === 'desktop';
     if (step.id === 'install') {
       nextEl.textContent = installDone ? 'Reboot' : 'Installing...';
       nextEl.disabled = !installDone;
@@ -800,10 +1062,15 @@
       nextEl.disabled = hasErrors(step.id);
     }
     if (step.id === 'install' && !installTimer && !installDone) startInstall();
+    updateHelp();
   }
 
   function syncNext() {
     const id = steps[current].id;
+    if (id === 'boot') {
+      nextEl.disabled = true;
+      return;
+    }
     if (id === 'install') {
       nextEl.disabled = !installDone;
       return;
@@ -817,6 +1084,7 @@
 
   function updateFeedback() {
     const id = steps[current].id;
+    if (id === 'boot') return;
     const issues = validateStep(id);
     if (!issues.length) {
       feedbackEl.innerHTML = '<p class="ok">No problems on this screen.</p>';
@@ -829,8 +1097,451 @@
   function updateStoragePreview() {
     const preview = $('storage-preview');
     if (preview) {
-      preview.textContent = `Using ${partitionTotal()} GB of ${state.disk} GB.`;
+      preview.textContent = `Using ${partitionTotal()} GB of ${state.disk} GB (including ${EFI_SIZE} GB EFI).`;
     }
+  }
+
+  function bootName(device) {
+    return {
+      disk: 'UEFI: Virtual disk (20 GB)',
+      iso: 'UEFI: Ubuntu Server 24.04 LTS ISO',
+      network: 'UEFI: Network boot (PXE)'
+    }[device] || device;
+  }
+
+  function postBody() {
+    return `
+      <div class="boot-screen">
+        <div class="post-logo">CLOUDCORE VIRTUAL PLATFORM</div>
+        <div class="post-sub">UEFI firmware 2.7.1 &middot; service pod 01</div>
+        <div class="post-line"><span class="k">CPU</span><span class="v">CloudCore vCPU, 2 cores at 2.4 GHz</span></div>
+        <div class="post-line"><span class="k">Memory</span><span class="v">2048 MB</span></div>
+        <div class="post-line"><span class="k">Storage</span><span class="v">20 GB virtual disk</span></div>
+        <div class="post-line"><span class="k">Network</span><span class="v">UEFI PXE over IPv4</span></div>
+        <div class="post-line"><span class="k">Secure Boot</span><span class="v">${state.secureBoot ? 'Enabled' : 'Disabled'}</span></div>
+        <div class="post-key">
+          Press <kbd>F2</kbd> for Setup &middot; <kbd>F12</kbd> for Boot Menu
+          &middot; continuing in <strong id="boot-countdown">${bootCountdown}</strong>s
+        </div>
+        <div class="boot-actions">
+          <button class="btn" id="bios-enter" type="button">F2: Setup</button>
+          <button class="btn" id="boot-menu" type="button">F12: Boot Menu</button>
+          <button class="btn primary" id="boot-continue" type="button">Continue boot</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function uefiSide(tab) {
+    const sides = {
+      main: ['System information', 'The firmware reports the virtual hardware. These values are read-only in the simulation. The lab host uses 2 GB of memory and a 20 GB disk, which is enough for the service pod.'],
+      advanced: ['Advanced settings', 'Virtualisation is enabled because the container runtime needs it. Memory, CSM and other advanced settings are fixed for the lab. Click a value marked with an asterisk to see why.'],
+      security: ['Security', 'Secure Boot is on by default. The administrator password is not modelled; the real host uses sudo for administrative work.'],
+      boot: ['Boot order', 'The firmware tries devices from the top down. The disk is empty before the install, so put the ISO first to install, then put the disk first to boot the installed system.'],
+      exit: ['Save and exit', 'Save the boot order and continue the boot. Load defaults restores the original order. The simulation does not write to real firmware.']
+    };
+    const [title, text] = sides[tab] || sides.main;
+    return `<h4>${esc(title)}</h4><p>${esc(text)}</p><p>Settings marked with <strong>*</strong> are fixed in the simulation.</p>`;
+  }
+
+  function uefiPane(tab) {
+    if (tab === 'main') {
+      return `
+        <div class="uefi-title">System Information</div>
+        <table class="uefi-table">
+          <tr><th>BIOS version</th><td>CloudCore UEFI 2.7.1</td></tr>
+          <tr><th>Processor</th><td>CloudCore vCPU, 2 cores at 2.4 GHz</td></tr>
+          <tr><th>Memory</th><td>2048 MB</td></tr>
+          <tr><th>Virtual disk</th><td>20 GB</td></tr>
+          <tr><th>Boot mode</th><td>UEFI</td></tr>
+          <tr><th>Secure Boot</th><td>${state.secureBoot ? 'Enabled' : 'Disabled'}</td></tr>
+          <tr><th>System time</th><td>${new Date().toLocaleString()}</td></tr>
+        </table>
+      `;
+    }
+    if (tab === 'advanced') {
+      return `
+        <div class="uefi-title">Advanced</div>
+        <table class="uefi-table">
+          <tr><th>Virtualisation (VT-x / AMD-V)</th><td>Enabled *</td></tr>
+          <tr><th>Memory configuration</th><td><button class="uefi-value-btn" data-info="memory" type="button">Auto *</button></td></tr>
+          <tr><th>CSM / legacy boot</th><td><button class="uefi-value-btn" data-info="csm" type="button">Disabled *</button></td></tr>
+          <tr><th>TPM</th><td><button class="uefi-value-btn" data-info="tpm" type="button">Present *</button></td></tr>
+          <tr><th>Fast boot</th><td><button class="uefi-value-btn" id="toggle-fast-boot" type="button">${state.fastBoot ? 'Enabled' : 'Disabled'}</button></td></tr>
+        </table>
+      `;
+    }
+    if (tab === 'security') {
+      return `
+        <div class="uefi-title">Security</div>
+        <table class="uefi-table">
+          <tr><th>Secure Boot</th><td><button class="uefi-value-btn" id="toggle-secure-boot" type="button">${state.secureBoot ? 'Enabled' : 'Disabled'}</button></td></tr>
+          <tr><th>Administrator password</th><td><button class="uefi-value-btn" data-info="admin-password" type="button">Not set</button></td></tr>
+          <tr><th>TPM</th><td><button class="uefi-value-btn" data-info="tpm" type="button">Present *</button></td></tr>
+        </table>
+        <p class="hint" style="margin-top:14px">Secure Boot is a firmware check on the bootloader. Turn it off only if you are troubleshooting a signed boot chain.</p>
+      `;
+    }
+    if (tab === 'boot') {
+      return `
+        <div class="uefi-title">Boot</div>
+        <p class="hint">The first device is tried first. Use Up and Down to change the order.</p>
+        <div class="boot-order">
+          ${state.bootOrder.map((device, index) => `
+            <div class="boot-item ${index === 0 ? 'first' : ''}">
+              <div>
+                <div class="name">${index + 1}. ${esc(bootName(device))}</div>
+                <div class="rank">${index === 0 ? 'First boot device' : 'Boot device ' + (index + 1)}</div>
+              </div>
+              <div class="boot-move">
+                <button data-move="up" data-index="${index}" ${index === 0 ? 'disabled' : ''} type="button">Up</button>
+                <button data-move="down" data-index="${index}" ${index === state.bootOrder.length - 1 ? 'disabled' : ''} type="button">Down</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <table class="uefi-table">
+          <tr><th>Boot mode</th><td>UEFI</td></tr>
+          <tr><th>Fast boot</th><td><button class="uefi-value-btn" id="toggle-fast-boot" type="button">${state.fastBoot ? 'Enabled' : 'Disabled'}</button></td></tr>
+        </table>
+      `;
+    }
+    return `
+      <div class="uefi-title">Save &amp; Exit</div>
+      <p class="hint">Save the boot order and continue the boot, or restore the defaults.</p>
+      <div class="boot-actions">
+        <button class="btn primary" id="save-exit" type="button">Save and exit</button>
+        <button class="btn" id="load-defaults" type="button">Load defaults</button>
+      </div>
+      <p class="hint" style="margin-top:16px">The simulation does not write to real firmware. The boot order is recorded in the build record.</p>
+    `;
+  }
+
+  function uefiBody() {
+    const tabs = [
+      ['main', 'Main'],
+      ['advanced', 'Advanced'],
+      ['security', 'Security'],
+      ['boot', 'Boot'],
+      ['exit', 'Save & Exit']
+    ];
+    return `
+      <div class="uefi">
+        <div class="uefi-top"><span>CloudCore UEFI Setup</span><span>Firmware 2.7.1 &middot; UEFI mode</span></div>
+        <div class="uefi-tabs">
+          ${tabs.map(([id, label]) => `<button class="uefi-tab ${state.biosTab === id ? 'active' : ''}" data-tab="${id}" type="button">${label}</button>`).join('')}
+        </div>
+        <div class="uefi-layout">
+          <div class="uefi-pane">${uefiPane(state.biosTab)}</div>
+          <div class="uefi-side">${uefiSide(state.biosTab)}</div>
+        </div>
+        <div class="uefi-footer">
+          <span>Esc: exit setup &middot; F10: save and exit</span>
+          <span>Settings marked * are fixed in the simulation</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function bootMenuBody() {
+    return `
+      <div class="boot-screen" style="justify-content:flex-start">
+        <div class="post-logo">Boot Menu</div>
+        <div class="post-sub">F12 &middot; select a boot device</div>
+        ${state.installed
+          ? '<p class="boot-note">Installation complete. The installer ISO is still attached. Select the UEFI disk to boot the installed system.</p>'
+          : '<p class="boot-note">The virtual disk is empty. Select the Ubuntu Server ISO to install.</p>'}
+        <div class="boot-menu">
+          <button class="boot-option" data-boot="iso" type="button">
+            <strong>UEFI: Ubuntu Server 24.04 LTS ISO</strong>
+            <span>The installer. Use this first.</span>
+          </button>
+          <button class="boot-option" data-boot="disk" type="button">
+            <strong>UEFI: Virtual disk (20 GB)</strong>
+            <span>${state.installed ? 'Ubuntu is installed here.' : 'Empty. No operating system.'}</span>
+          </button>
+          <button class="boot-option" data-boot="network" type="button">
+            <strong>UEFI: Network boot (PXE)</strong>
+            <span>No PXE server in this estate. This will fail.</span>
+          </button>
+        </div>
+        <div class="boot-actions">
+          <button class="btn" id="bios-enter" type="button">F2: Setup</button>
+          <button class="btn" id="boot-post" type="button">Back to POST</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function noBootBody() {
+    return `
+      <div class="boot-screen">
+        <div class="post-logo" style="color:#ff8a80">No bootable device</div>
+        <div class="post-sub">The virtual disk is empty and no other device booted.</div>
+        <p>Open the boot menu and choose the Ubuntu Server ISO, or change the boot order in setup.</p>
+        <div class="boot-actions">
+          <button class="btn" id="bios-enter" type="button">F2: Setup</button>
+          <button class="btn primary" id="boot-menu" type="button">F12: Boot Menu</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function pxeBody() {
+    return `
+      <div class="boot-screen">
+        <div class="post-logo" style="color:#ff8a80">PXE-E61: Media test failure</div>
+        <div class="post-sub">Network boot was selected, but no PXE server answered.</div>
+        <p>There is no PXE server in this estate. Choose the ISO to install, or the disk after installation.</p>
+        <div class="boot-actions">
+          <button class="btn primary" id="boot-menu" type="button">F12: Boot Menu</button>
+          <button class="btn" id="bios-enter" type="button">F2: Setup</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function bootBody() {
+    if (state.bootScreen === 'uefi') return uefiBody();
+    if (state.bootScreen === 'bootmenu') return bootMenuBody();
+    if (state.bootScreen === 'noBoot') return noBootBody();
+    if (state.bootScreen === 'pxe') return pxeBody();
+    return postBody();
+  }
+
+  function clearBootTimer() {
+    if (bootTimer) {
+      clearInterval(bootTimer);
+      bootTimer = null;
+    }
+  }
+
+  function startBootCountdown() {
+    clearBootTimer();
+    bootCountdown = 3;
+    const el = $('boot-countdown');
+    if (el) el.textContent = String(bootCountdown);
+    bootTimer = setInterval(() => {
+      bootCountdown -= 1;
+      const span = $('boot-countdown');
+      if (span) span.textContent = String(Math.max(0, bootCountdown));
+      if (bootCountdown <= 0) {
+        clearBootTimer();
+        continueBoot();
+      }
+    }, 1000);
+  }
+
+  function continueBoot() {
+    clearBootTimer();
+    const first = state.bootOrder[0];
+    if (state.installed) {
+      if (first === 'disk') {
+        current = steps.findIndex((step) => step.id === 'desktop');
+        render();
+        return;
+      }
+      if (first === 'iso') {
+        state.bootScreen = 'bootmenu';
+        render();
+        return;
+      }
+      state.bootScreen = 'pxe';
+      render();
+      return;
+    }
+    if (first === 'iso') {
+      current = steps.findIndex((step) => step.id === 'release');
+      render();
+      return;
+    }
+    if (first === 'disk') {
+      state.bootScreen = 'noBoot';
+      render();
+      return;
+    }
+    state.bootScreen = 'pxe';
+    render();
+  }
+
+  function openUefi(tab) {
+    clearBootTimer();
+    state.bootScreen = 'uefi';
+    state.biosTab = tab || 'main';
+    render();
+  }
+
+  function openBootMenu() {
+    clearBootTimer();
+    state.bootScreen = 'bootmenu';
+    render();
+  }
+
+  function selectBoot(device) {
+    if (device === 'iso') {
+      if (state.installed) {
+        showInfo('Installer ISO is still attached', 'The installed system is on the virtual disk. Select the UEFI disk to boot it, or change the boot order in setup.');
+        return;
+      }
+      current = steps.findIndex((step) => step.id === 'release');
+      state.bootScreen = 'post';
+      render();
+      return;
+    }
+    if (device === 'disk') {
+      if (!state.installed) {
+        state.bootScreen = 'noBoot';
+        render();
+        return;
+      }
+      current = steps.findIndex((step) => step.id === 'desktop');
+      render();
+      return;
+    }
+    state.bootScreen = 'pxe';
+    render();
+  }
+
+  function setBiosTab(tab) {
+    state.biosTab = tab;
+    render();
+  }
+
+  function moveBoot(index, direction) {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= state.bootOrder.length) return;
+    const order = state.bootOrder;
+    [order[index], order[target]] = [order[target], order[index]];
+    render();
+  }
+
+  function toggleSecureBoot() {
+    state.secureBoot = !state.secureBoot;
+    render();
+  }
+
+  function toggleFastBoot() {
+    state.fastBoot = !state.fastBoot;
+    render();
+  }
+
+  function saveAndExit() {
+    clearBootTimer();
+    state.bootScreen = 'post';
+    render();
+  }
+
+  function loadDefaults() {
+    state.bootOrder = ['disk', 'iso', 'network'];
+    state.secureBoot = true;
+    state.fastBoot = false;
+    render();
+  }
+
+  const infoText = {
+    'admin-password': {
+      title: 'Administrator password',
+      body: '<p>Not modelled. A firmware administrator password stops someone changing the boot order or firmware settings.</p><p>In the real lab host, administrative work uses <code>sudo</code> and the <code>student</code> account, not a firmware password.</p>'
+    },
+    tpm: {
+      title: 'TPM',
+      body: '<p>The simulation shows a TPM because a modern UEFI system normally has one. It is not used in this unit.</p><p>A TPM stores keys and measurements for features such as disk encryption and measured boot. That is outside the CloudCore service pod.</p>'
+    },
+    csm: {
+      title: 'CSM / legacy boot',
+      body: '<p>Compatibility Support Module. It lets old BIOS-only operating systems boot. It is disabled here because the host uses UEFI.</p><p>Legacy boot is a common source of confusion. Modern servers use UEFI.</p>'
+    },
+    memory: {
+      title: 'Memory configuration',
+      body: '<p>Fixed at 2048 MB for the service pod. That is enough for the host shell and the small container estate.</p><p>On a real server you would size memory from the workload and leave headroom for the kernel and page cache.</p>'
+    }
+  };
+
+  function showInfo(key, bodyHtml) {
+    const info = bodyHtml ? { title: key, body: bodyHtml } : infoText[key];
+    if (!info) return;
+    $('info-title').textContent = info.title;
+    $('info-body').innerHTML = info.body;
+    $('info-modal').classList.add('open');
+    $('close-info').focus();
+  }
+
+  function closeInfo() {
+    $('info-modal').classList.remove('open');
+  }
+
+  function helpSection(title, html) {
+    return `<div class="help-section"><h4>${esc(title)}</h4>${html}</div>`;
+  }
+
+  function helpHtml() {
+    const id = steps[current].id;
+    if (id === 'boot') {
+      if (state.bootScreen === 'uefi') {
+        const tabHelp = {
+          main: 'The firmware reports the virtual hardware. These values are read-only. The lab host uses 2 GB of memory and a 20 GB disk, enough for the pod.',
+          advanced: 'Virtualisation is on because the container runtime needs it. Memory, CSM and other advanced settings are fixed for the lab. Click the values marked with an asterisk to see why.',
+          security: 'Secure Boot is on. The administrator password is not modelled. The real host uses sudo for administrative work.',
+          boot: 'The firmware tries devices from the top down. The disk is empty before the install. Put the ISO first to install, then put the disk first to boot the installed system.',
+          exit: 'Save and exit continues the boot with the current order. Load defaults restores the original order.'
+        };
+        return helpSection('This screen', `<p>${esc(tabHelp[state.biosTab] || tabHelp.main)}</p>`)
+          + helpSection('What to do', '<p>Change the boot order if you need to. Then choose <strong>Save &amp; Exit</strong> and save.</p>')
+          + helpSection('Simulation notes', '<p>The firmware is simulated. It does not write to real firmware. The settings are recorded in the build record.</p>');
+      }
+      if (state.bootScreen === 'bootmenu') {
+        return helpSection('This screen', '<p>The one-time boot menu. The first device is used for this boot only; it does not change the saved boot order.</p>')
+          + helpSection('What to do', '<p>Choose the Ubuntu Server ISO to install. After the install, choose the UEFI disk to boot the installed system.</p>')
+          + helpSection('Simulation notes', '<p>Network boot is listed because a real server offers it. There is no PXE server in this estate, so it fails.</p>');
+      }
+      if (state.bootScreen === 'noBoot') {
+        return helpSection('This screen', '<p>The firmware tried the disk first and found no operating system. That is expected before the install.</p>')
+          + helpSection('What to do', '<p>Open the boot menu and choose the ISO, or change the boot order in setup.</p>');
+      }
+      if (state.bootScreen === 'pxe') {
+        return helpSection('This screen', '<p>Network boot was selected, but no PXE server answered. The estate has no PXE server.</p>')
+          + helpSection('What to do', '<p>Open the boot menu and choose the ISO or the disk.</p>');
+      }
+      return helpSection('This screen', '<p>This is the firmware boot screen. The disk is empty, so the default boot order will fail until you install or change the order.</p>')
+        + helpSection('What to do', '<p>Press <strong>F2</strong> for setup, <strong>F12</strong> for the boot menu, or wait for the countdown. The buttons do the same thing if the function keys do not reach the browser.</p>')
+        + helpSection('Simulation notes', '<p>The CPU, memory and disk are fixed for the lab. The real host is an Ubuntu container shell, not a virtual machine.</p>');
+    }
+    const help = {
+      release: ['Choose the release. 24.04 LTS is the long-term default.', 'Use Ubuntu Server 24.04 LTS. It is the long-term release and it matches the real lab host.', 'A newer interim release has a short support window. An older LTS is still supported but not the default.'],
+      network: ['The host needs an address, a route and a name.', 'DHCP is fine for the lab. A static address is what you would use for a server with a fixed role.', 'The real host uses the container network. The address is inside the container runtime.'],
+      storage: ['The installer needs a disk layout.', 'Guided partitioning is the safe first choice. Manual lets you choose root and swap sizes.', 'The real host is a container userland, so the disk is simulated. The EFI, root and swap decisions are the lesson.'],
+      user: ['Create the administrative account.', 'Create a non-root administrative user. Root is locked; use sudo for administrative work.', 'The lab host uses student with the cloudcore password. Change the password in the host shell.'],
+      ssh: ['Remote access for the host.', 'Install the OpenSSH server so you can administer the host remotely.', 'The container host uses a shell, not a real SSH server. The decision is the lesson.'],
+      packages: ['Choose the package set.', 'Standard utilities give you the tools for the first labs. Minimal is smaller; you install more later.', 'The real host image already includes the common tools.'],
+      review: ['Check the build record.', 'Check the summary. Go back if a choice is wrong.', 'Download the build record. It is your evidence for the portfolio.'],
+      install: ['The installer is running.', 'The installer is copying the system, creating the user and writing the boot loader.', 'The install is simulated. The real host is an Ubuntu container shell.'],
+      desktop: ['This is the desktop after the first boot.', 'Open the terminal to continue on your machine.', 'The desktop is a mock. The real work is in the terminal.']
+    }[id] || ['This screen', '', ''];
+    return helpSection('This screen', `<p>${esc(help[0])}</p>`)
+      + helpSection('What to do', `<p>${esc(help[1])}</p>`)
+      + helpSection('Simulation notes', `<p>${esc(help[2])}</p>`);
+  }
+
+  function updateHelp() {
+    $('help-content').innerHTML = helpHtml();
+  }
+
+  function toggleHelp() {
+    helpOpen = !helpOpen;
+    helpPanel.classList.toggle('open', helpOpen);
+    helpPanel.setAttribute('aria-hidden', String(!helpOpen));
+    helpToggle.setAttribute('aria-expanded', String(helpOpen));
+    if (helpOpen) {
+      updateHelp();
+      $('close-help').focus();
+    }
+  }
+
+  function closeHelp() {
+    helpOpen = false;
+    helpPanel.classList.remove('open');
+    helpPanel.setAttribute('aria-hidden', 'true');
+    helpToggle.setAttribute('aria-expanded', 'false');
   }
 
   function startInstall() {
@@ -842,13 +1553,14 @@
     if (!log || !bar || !label) return;
     const lines = [
       'Reading partition table...',
+      'Creating EFI system partition...',
       'Creating ext4 root file system...',
       'Installing base system...',
-      'Configuring network...',
+      state.network === 'none' ? 'Skipping network configuration...' : 'Configuring network...',
       `Creating user ${state.username}...`,
       state.ssh ? 'Installing OpenSSH server...' : 'Skipping OpenSSH server...',
-      'Installing standard packages...',
-      'Writing boot loader...',
+      state.network === 'none' ? 'Skipping package updates (no network)...' : 'Installing standard packages...',
+      'Installing GRUB to the EFI system partition...',
       'Finishing...'
     ];
     let lineIndex = 0;
@@ -881,15 +1593,20 @@
   function buildRecord() {
     const network = state.network === 'dhcp'
       ? 'DHCP'
-      : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`;
+      : state.network === 'none'
+        ? 'No network'
+        : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`;
     const storage = state.storage === 'guided'
-      ? `Guided, ${state.disk} GB disk`
-      : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap on ${state.disk} GB disk`;
+      ? `Guided, ${state.disk} GB disk (EFI + root + swap)`
+      : `Manual, ${state.rootSize} GB root + ${state.swap} GB swap + ${EFI_SIZE} GB EFI on ${state.disk} GB disk`;
     return [
       '# CloudCore host build record',
       '',
       `- Release: ${releaseLabel()}`,
       `- Hostname: ${state.hostname}`,
+      `- Boot order: ${state.bootOrder.map(bootName).join(' -> ')}`,
+      `- Secure Boot: ${state.secureBoot ? 'Enabled' : 'Disabled'}`,
+      `- Installed from: ${releaseLabel()} ISO (simulated)`,
       `- Network: ${network}`,
       `- Storage: ${storage}`,
       `- User: ${state.fullname} (${state.username})`,
@@ -901,9 +1618,12 @@
       '',
       '- The release is a long-term support release, so the host is supported for the life of the unit and beyond.',
       '- The hostname identifies the service pod on the network.',
+      '- The boot order is recorded above. Use the ISO first to install, then the disk to boot the installed system.',
+      '- Secure Boot stays on. It is the normal firmware setting for a modern server.',
       '- The network choice matches the lab. A static address is for a fixed server role.',
-      '- The storage layout leaves room for updates, logs and container images.',
-      '- The user is the administrative account. SSH is the normal remote-access path.',
+      '- The storage layout leaves room for updates, logs and container images. The EFI system partition holds the boot loader.',
+      '- The user is the administrative account. Root is locked, so administrative work uses sudo.',
+      '- SSH is the normal remote-access path.',
       '',
       '## Next step',
       '',
@@ -960,9 +1680,12 @@
 
   function goNext() {
     const id = steps[current].id;
+    if (id === 'boot') return;
     if (id === 'install') {
       if (!installDone) return;
-      current = steps.findIndex((step) => step.id === 'desktop');
+      state.installed = true;
+      state.bootScreen = 'bootmenu';
+      current = steps.findIndex((step) => step.id === 'boot');
       render();
       return;
     }
@@ -982,7 +1705,8 @@
   }
 
   function goBack() {
-    if (steps[current].id === 'install') return;
+    const id = steps[current].id;
+    if (id === 'boot' || id === 'install' || id === 'desktop') return;
     current = Math.max(0, current - 1);
     render();
   }
@@ -990,9 +1714,19 @@
   function reset() {
     if (installTimer) clearInterval(installTimer);
     installTimer = null;
+    clearBootTimer();
     installProgress = 0;
     installDone = false;
+    closeHelp();
+    closeInfo();
+    closeTerminal();
     Object.assign(state, {
+      bootScreen: 'post',
+      biosTab: 'main',
+      bootOrder: ['disk', 'iso', 'network'],
+      secureBoot: true,
+      fastBoot: false,
+      installed: false,
       release: 'ubuntu-24.04',
       hostname: 'cloudcore-host',
       network: 'dhcp',
@@ -1001,7 +1735,7 @@
       dns: '10.0.2.3',
       storage: 'guided',
       disk: 20,
-      rootSize: 18,
+      rootSize: 17,
       swap: 2,
       fullname: 'CloudCore Student',
       username: 'student',
@@ -1053,6 +1787,25 @@
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+    const tabBtn = target.closest('[data-tab]');
+    if (tabBtn) { setBiosTab(tabBtn.dataset.tab); return; }
+    const moveBtn = target.closest('[data-move]');
+    if (moveBtn) { moveBoot(Number(moveBtn.dataset.index), moveBtn.dataset.move); return; }
+    const bootBtn = target.closest('[data-boot]');
+    if (bootBtn) { selectBoot(bootBtn.dataset.boot); return; }
+    const infoBtn = target.closest('[data-info]');
+    if (infoBtn) { showInfo(infoBtn.dataset.info); return; }
+    if (target.closest('#bios-enter')) { openUefi('main'); return; }
+    if (target.closest('#boot-menu')) { openBootMenu(); return; }
+    if (target.closest('#boot-continue')) { continueBoot(); return; }
+    if (target.closest('#boot-post')) { clearBootTimer(); state.bootScreen = 'post'; render(); return; }
+    if (target.closest('#toggle-secure-boot')) { toggleSecureBoot(); return; }
+    if (target.closest('#toggle-fast-boot')) { toggleFastBoot(); return; }
+    if (target.closest('#save-exit')) { saveAndExit(); return; }
+    if (target.closest('#load-defaults')) { loadDefaults(); return; }
+    if (target.closest('#help-toggle')) { toggleHelp(); return; }
+    if (target.closest('#close-help')) { closeHelp(); return; }
+    if (target.closest('#close-info')) { closeInfo(); return; }
     if (target.closest('#next')) { goNext(); return; }
     if (target.closest('#back')) { goBack(); return; }
     if (target.closest('#download-record') || target.closest('#download-record-2') || target.closest('#download-record-3')) {
@@ -1080,11 +1833,51 @@
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeTerminal();
+    if (event.key === 'Escape') {
+      const overlayOpen = $('terminal-modal').classList.contains('open')
+        || $('info-modal').classList.contains('open')
+        || helpPanel.classList.contains('open');
+      closeTerminal();
+      closeInfo();
+      closeHelp();
+      if (overlayOpen) return;
+    }
+    if (steps[current].id === 'boot') {
+      if (event.key === 'F2') {
+        event.preventDefault();
+        openUefi('main');
+        return;
+      }
+      if (event.key === 'F12') {
+        event.preventDefault();
+        openBootMenu();
+        return;
+      }
+      if (event.key === 'F10' && state.bootScreen === 'uefi') {
+        event.preventDefault();
+        saveAndExit();
+        return;
+      }
+      if (event.key === 'Enter' && state.bootScreen === 'post') {
+        event.preventDefault();
+        continueBoot();
+        return;
+      }
+      if (event.key === 'Escape' && (state.bootScreen === 'uefi' || state.bootScreen === 'bootmenu')) {
+        event.preventDefault();
+        clearBootTimer();
+        state.bootScreen = 'post';
+        render();
+      }
+    }
   });
 
   $('terminal-modal').addEventListener('click', (event) => {
     if (event.target === $('terminal-modal')) closeTerminal();
+  });
+
+  $('info-modal').addEventListener('click', (event) => {
+    if (event.target === $('info-modal')) closeInfo();
   });
 
   render();

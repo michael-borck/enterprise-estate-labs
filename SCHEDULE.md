@@ -15,7 +15,7 @@ weeks follow the 2026 calendar shape (Weeks 1-7, tuition-free Weeks 8-9, teachin
 | 04 | Networking models | 04 | 4 | Host-side capture and network inspection (uses `m03`) |
 | 05 | Addressing and naming | 05 | 5 | Internal DNS, wrong record fault (uses `m03` + `m05`) |
 | 06 | Protocols and the web tier | 06 | 6 | Reverse proxy, TLS, certificate fault |
-| 08 | Identity and access | 08 | 10 | Planned |
+| 08 | Identity and access | 08 | 10 | Users, groups, service accounts, least privilege (`m08`) |
 | 09 | File systems and access control | 09 | 11 | Shared volume, ownership, permission fault |
 | 10 | Storage, virtualisation and cloud | 10 | 12 | Planned |
 | 11 | Security, privacy and incident response | 11 | 13 | Planned |

@@ -27,7 +27,7 @@ if [[ -z "${COMPOSE:-}" ]]; then
 fi
 
 cleanup() {
-  $COMPOSE --profile m03 --profile m05 --profile m06 --profile m09 down -v --remove-orphans >/dev/null 2>&1 || true
+  $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 down -v --remove-orphans >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -43,6 +43,9 @@ wait_for() {
   echo "Timed out waiting for ${description}" >&2
   return 1
 }
+
+echo "==> Cleaning any previous estate"
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 down -v --remove-orphans >/dev/null 2>&1 || true
 
 echo "==> Validating compose file"
 $COMPOSE config >/dev/null
@@ -63,8 +66,28 @@ $COMPOSE --profile m03 --profile m05 --profile m06 up -d
 wait_for "TLS proxy" curl -kfsS https://localhost:8443/
 curl -kfsS https://localhost:8443/ | grep -qi "CloudCore estate"
 
+echo "==> Module 08: identity and access"
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 up -d
+wait_for "identity" $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T identity getent group reporting
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T identity getent group reporting | grep -q "svc-report"
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user bob identity cat /reports/quarterly.txt | grep -qi "CloudCore"
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user bob identity cat /reports/board-pack.txt | grep -qi "confidential"
+if $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user contractor identity cat /reports/quarterly.txt >/dev/null 2>&1; then
+  echo "contractor should not be able to read the quarterly report" >&2
+  exit 1
+fi
+if $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user contractor identity cat /reports/board-pack.txt >/dev/null 2>&1; then
+  echo "contractor should not be able to read the board pack" >&2
+  exit 1
+fi
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user alice identity sudo -n id >/dev/null
+if $COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 exec -T --user alice identity sudo -n cat /reports/quarterly.txt >/dev/null 2>&1; then
+  echo "alice should not be able to sudo cat the report" >&2
+  exit 1
+fi
+
 echo "==> Module 09: shared volume"
-$COMPOSE --profile m03 --profile m05 --profile m06 --profile m09 up -d
+$COMPOSE --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d
 $COMPOSE ps
 
 echo "Smoke test passed"

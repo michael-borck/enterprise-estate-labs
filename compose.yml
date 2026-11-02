@@ -56,6 +56,15 @@ services:
       estate:
         ipv4_address: 172.28.0.53
 
+  identity:
+    build:
+      context: ./estate/identity
+    image: cloudcore-identity:latest
+    profiles: ["m08"]
+    networks:
+      estate:
+        ipv4_address: 172.28.0.20
+
   proxy:
     image: caddy:2-alpine
     profiles: ["m06"]

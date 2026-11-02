@@ -10,10 +10,10 @@ else
 COMPOSE ?= docker compose
 endif
 
-ALL_PROFILES = --profile m03 --profile m05 --profile m06 --profile m09
+ALL_PROFILES = --profile m03 --profile m05 --profile m06 --profile m08 --profile m09
 
-.PHONY: help m03 m05 m06 m09 stop down reset reset-m03 reset-m05 reset-m06 reset-m09 \
-        status logs console smoke pull fix-m05 break-m05 fix-m09 break-m09
+.PHONY: help m03 m05 m06 m08 m09 stop down reset reset-m03 reset-m05 reset-m06 reset-m08 reset-m09 \
+        status logs console smoke pull fix-m05 break-m05 fix-m08 break-m08 fix-m09 break-m09
 
 help:
 	@echo "Enterprise Estate Labs (staff/advanced)"
@@ -23,6 +23,7 @@ help:
 	@echo "  make m03          Start the Module 03 state (web, db, tools)"
 	@echo "  make m05          Start the cumulative Module 05 state (adds internal DNS)"
 	@echo "  make m06          Start the cumulative Module 06 state (adds proxy/TLS)"
+	@echo "  make m08          Start the cumulative Module 08 state (adds identity)"
 	@echo "  make m09          Start the cumulative Module 09 state (adds shared volume)"
 	@echo "  make console      Shell on the tools container (needs m03 or later)"
 	@echo "  make status       Show running services"
@@ -33,9 +34,12 @@ help:
 	@echo "  make reset-m03    Remove everything and return to the Module 03 state"
 	@echo "  make reset-m05    Remove everything and return to the Module 05 state"
 	@echo "  make reset-m06    Remove everything and return to the Module 06 state"
+	@echo "  make reset-m08    Remove everything and return to the Module 08 state"
 	@echo "  make reset-m09    Remove everything and return to the Module 09 state"
 	@echo "  make fix-m05      Restore the Module 05 DNS record"
 	@echo "  make break-m05    Point the Module 05 portal name at the wrong address"
+	@echo "  make fix-m08      Restore the Module 08 reporting group membership"
+	@echo "  make break-m08    Remove the reporting service from the reporting group"
 	@echo "  make fix-m09      Repair the Module 09 share permissions"
 	@echo "  make break-m09    Put the Module 09 share back into the broken state"
 	@echo ""
@@ -50,8 +54,11 @@ m05:
 m06:
 	$(COMPOSE) --profile m03 --profile m05 --profile m06 up -d
 
+m08:
+	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 up -d
+
 m09:
-	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m09 up -d
+	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d
 
 stop:
 	$(COMPOSE) $(ALL_PROFILES) stop
@@ -70,6 +77,10 @@ reset-m05:
 reset-m06:
 	$(COMPOSE) $(ALL_PROFILES) down -v --remove-orphans
 	$(COMPOSE) --profile m03 --profile m05 --profile m06 up -d
+
+reset-m08:
+	$(COMPOSE) $(ALL_PROFILES) down -v --remove-orphans
+	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 up -d
 
 reset-m09:
 	$(COMPOSE) $(ALL_PROFILES) down -v --remove-orphans
@@ -95,6 +106,12 @@ fix-m05:
 
 break-m05:
 	./scenarios/m05/break.sh
+
+fix-m08:
+	./scenarios/m08/fix.sh
+
+break-m08:
+	./scenarios/m08/break.sh
 
 fix-m09:
 	$(COMPOSE) --profile m09 run --rm --user root writer sh -c 'chown -R 1000:1000 /share && chmod 775 /share'

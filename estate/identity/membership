@@ -1,0 +1,7 @@
+# group:supplementary members
+# The primary group for each user is set in entrypoint.sh.
+ops:alice
+finance:bob
+reporting:bob,svc-report
+contractors:contractor
+services:svc-report

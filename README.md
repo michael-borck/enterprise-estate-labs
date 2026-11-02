@@ -1,7 +1,7 @@
 # Enterprise Estate Labs
 
-> **Status:** prototype. The Module 03, 06 and 09 slice is built and tested. The rest
-> of the estate follows once the cumulative-state pattern is proven in a real lab.
+> **Status:** prototype. The Module 03, 05, 06, 08 and 09 states are built and tested.
+> The remaining states follow once the cumulative-state pattern is proven in a real lab.
 
 A self-contained, container-based enterprise estate for a first course in enterprise
 technology. Students build, operate and secure one Linux and container estate across
@@ -26,6 +26,7 @@ cd enterprise-estate-labs
 ./start.sh guide  # install simulation, then the Ubuntu host shell
 ./start.sh m03    # the CloudCore estate
 ./start.sh m05    # the estate plus internal DNS
+./start.sh m08    # the estate plus identity and access
 ```
 
 On Windows, use `start.bat guide` and `start.bat m03`.
@@ -40,6 +41,7 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh m03` | Start the Module 03 state: web, db and tools |
 | `./start.sh m05` | Start the cumulative Module 05 state and add internal DNS |
 | `./start.sh m06` | Start the cumulative Module 06 state and add the TLS proxy |
+| `./start.sh m08` | Start the cumulative Module 08 state and add identity and access |
 | `./start.sh m09` | Start the cumulative Module 09 state and add the shared volume |
 | `./start.sh status` | Show what is running |
 | `./start.sh console` | Shell on the tools container |
@@ -49,7 +51,9 @@ The launcher is the front door. You do not choose an engine.
 | `./start.sh reset m09` | Remove the volumes and return to a clean Module 09 state |
 | `./start.sh fix-m05` | Restore the portal DNS record |
 | `./start.sh break-m05` | Point the portal name at the wrong address |
-| `./start.sh smoke` | Validate all four states end to end |
+| `./start.sh fix-m08` | Restore the reporting group membership |
+| `./start.sh break-m08` | Remove the reporting service from the reporting group |
+| `./start.sh smoke` | Validate all five states end to end |
 
 Open <https://localhost:8443>. The certificate is issued by a local authority, so the
 browser warning is expected. That warning is part of Module 06.
@@ -69,11 +73,12 @@ configure with `./start.sh host`.
 | 04 | Networking models | uses the Module 03 state; capture in `tools` |
 | 05 | Addressing and naming | adds the `dns` service and the portal name |
 | 06 | Web and TLS | adds `proxy` (Caddy, internal TLS) |
+| 08 | Identity and access | adds `identity` with users, groups, reports and a sudo rule |
 | 09 | File systems and access control | adds `writer` and a shared volume with a permission fault |
 
 The states are cumulative. `./start.sh m05` also brings up Module 03. `./start.sh m06`
-also brings up Modules 03 and 05. `./start.sh m09` also brings up 03, 05 and 06. Nothing
-else runs.
+also brings up Modules 03 and 05. `./start.sh m08` also brings up 03, 05 and 06.
+`./start.sh m09` also brings up 03, 05, 06 and 08. Nothing else runs.
 
 ## Modules
 
@@ -84,14 +89,15 @@ else runs.
 | 04 | Networking models | [`modules/module-04-networking/LAB-GUIDE.md`](modules/module-04-networking/LAB-GUIDE.md) |
 | 05 | Addressing and naming | [`modules/module-05-naming/LAB-GUIDE.md`](modules/module-05-naming/LAB-GUIDE.md) |
 | 06 | Protocols and the web tier | [`modules/module-06-web-tls/LAB-GUIDE.md`](modules/module-06-web-tls/LAB-GUIDE.md) |
+| 08 | Identity and access | [`modules/module-08-identity/LAB-GUIDE.md`](modules/module-08-identity/LAB-GUIDE.md) |
 | 09 | File systems and access control | [`modules/module-09-filesystems/LAB-GUIDE.md`](modules/module-09-filesystems/LAB-GUIDE.md) |
 
-Planned: 08 identity, 10 storage, 11 security and incident response. The host shell and install simulation are in `host/`.
+Planned: 10 storage, 11 security and incident response. The host shell and install simulation are in `host/`.
 
 ## Design
 
 - **One estate, cumulative states.** Module numbers are states, not independent labs.
-- **One compose file.** Services are selected by profiles `m03`, `m06`, `m09`.
+- **One compose file.** Services are selected by profiles `m03`, `m05`, `m06`, `m08`, `m09`.
 - **Resettable.** `./start.sh reset mNN` removes volumes and returns to that state.
 - **Offline-friendly.** Images are prebuilt. The only external access is the initial pull.
 - **No host bind mounts for data.** Named volumes keep the labs portable across macOS,

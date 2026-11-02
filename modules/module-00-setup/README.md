@@ -123,6 +123,17 @@ cd enterprise-estate-labs
 > **Windows note:** "Extract All" puts the contents inside a new folder. The inner folder,
 > the one containing `start.bat`, is the one you want.
 
+### Where to put it
+
+Unzip or clone into a local folder you can find again, for example
+`Documents\enterprise-estate-labs`. Avoid running from Downloads, OneDrive, a network drive
+or a USB stick if you can. Docker builds and file permissions are simpler on a local disk.
+
+The launcher runs in the folder where `start.bat` or `start.sh` sits. It does not keep
+running from your Downloads folder after you unzip. Docker stores images, containers and
+volumes in its own area, not in the lab folder. The host home directory is a Docker volume
+named `cloudcore-host-home`.
+
 ## 4. Start the host shell
 
 The host shell is your Ubuntu Server. It is where you do the OS work: users, packages,
@@ -132,7 +143,17 @@ services, permissions and configuration.
 ./start.sh host
 ```
 
-On Windows, use Git Bash and run the same command, or use `start.bat host`.
+On Windows, use `start.bat`, not `start.sh`. In File Explorer, double-click `start.bat`,
+or open PowerShell in the folder and run:
+
+```powershell
+.\start.bat host
+```
+
+If you double-click `start.bat` with no command, it shows the command list and waits.
+
+The simulation does not install Docker and does not run the lab. It records the install
+decisions. Section 1 and section 3 are the real setup.
 
 The first run builds a small Ubuntu image. When the shell opens, you are the `student`
 user. The default password for `sudo` is `cloudcore`. Change it in your first session:
@@ -189,7 +210,10 @@ Docker or Podman commands. `./start.sh` hides the engine.
 
 | What you see | What it means |
 |---|---|
-| A window flashes open and disappears | Open a terminal in the folder and run `.\start.bat host` to see the message. |
+| A window flashes open and disappears | You probably double-clicked `start.sh`, which Windows cannot run. Double-click `start.bat` instead. If `start.bat` also closes, Git for Windows or Docker is missing; the launcher should pause with a message. |
+| I double-clicked `start.bat` and only see a command list | That is the no-argument help. Run `.\start.bat host` or `.\start.bat m03`. |
+| PowerShell says it cannot run `start.sh` | Use `.\start.bat host`. Do not run `start.sh` directly on Windows. |
+| The folder is in Downloads and things fail | Move the inner folder to Documents or another local folder. Avoid OneDrive, network drives and USB sticks. |
 | A virtualisation or WSL 2 error | See section 2. |
 | `bash` is not recognised | Install Git for Windows. It includes Git Bash and the launcher. |
 | Cannot connect to the Docker daemon | Start Docker Desktop and wait for *running*. |

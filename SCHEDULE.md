@@ -12,7 +12,7 @@ weeks follow the 2026 calendar shape (Weeks 1-7, tuition-free Weeks 8-9, teachin
 |---|---|---|---|---|
 | 00 | Environment setup | 01 | 1 | Install Docker or Podman, pull images, run the smoke test |
 | 03 | Processes, memory and containers | 03 | 3 | First running estate; resource limits |
-| 04 | Networking models | 04 | 4 | Planned |
+| 04 | Networking models | 04 | 4 | Host-side capture and network inspection (uses `m03`) |
 | 05 | Addressing and naming | 05 | 5 | Planned |
 | 06 | Protocols and the web tier | 06 | 6 | Reverse proxy, TLS, certificate fault |
 | 08 | Identity and access | 08 | 10 | Planned |

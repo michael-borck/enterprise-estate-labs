@@ -62,6 +62,7 @@ configure with `./start.sh host`.
 | Module | State | Services |
 |---|---|---|
 | 03 | Containers and limits | `db` (PostgreSQL), `web` (nginx), `tools` (network shell) |
+| 04 | Networking models | uses the Module 03 state; capture in `tools` |
 | 06 | Web and TLS | adds `proxy` (Caddy, internal TLS) |
 | 09 | File systems and access control | adds `writer` and a shared volume with a permission fault |
 
@@ -74,11 +75,12 @@ also brings up Modules 03 and 06. Nothing else runs.
 |---|---|---|
 | 00 | Environment setup | [`modules/module-00-setup/README.md`](modules/module-00-setup/README.md) |
 | 03 | Processes, memory and containers | [`modules/module-03-containers/LAB-GUIDE.md`](modules/module-03-containers/LAB-GUIDE.md) |
+| 04 | Networking models | [`modules/module-04-networking/LAB-GUIDE.md`](modules/module-04-networking/LAB-GUIDE.md) |
 | 06 | Protocols and the web tier | [`modules/module-06-web-tls/LAB-GUIDE.md`](modules/module-06-web-tls/LAB-GUIDE.md) |
 | 09 | File systems and access control | [`modules/module-09-filesystems/LAB-GUIDE.md`](modules/module-09-filesystems/LAB-GUIDE.md) |
 
-Planned: 04 networking, 05 addressing and naming, 08 identity, 10 storage, 11 security
-and incident response. The host shell and install simulation are in `host/`.
+Planned: 05 addressing and naming, 08 identity, 10 storage, 11 security and incident
+response. The host shell and install simulation are in `host/`.
 
 ## Design
 

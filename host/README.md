@@ -44,6 +44,8 @@ configuration work.
 
 ## Try it
 
+The online copy is at <https://michael-borck.github.io/enterprise-estate-labs/>.
+
 First time:
 
 ```bash

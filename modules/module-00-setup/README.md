@@ -136,8 +136,9 @@ named `cloudcore-host-home`.
 
 ## 4. Start the host shell
 
-The simulation is `index.html` in the lab pack root, or on the unit page. The launcher is
-in the same folder. Open a terminal there.
+The simulation is `index.html` in the lab pack root, on the unit page, or online at
+<https://michael-borck.github.io/enterprise-estate-labs/>. The launcher is in the lab pack
+root. Open a terminal there.
 
 First time, use the guided start:
 

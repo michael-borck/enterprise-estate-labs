@@ -357,7 +357,7 @@
       <h3 id="terminal-title">Terminal</h3>
       <button class="btn ghost" id="close-terminal">Close</button>
     </div>
-    <p class="lede">The simulation ends here. These are the real commands for your machine. Run them inside the lab pack folder. Docker stores the images and containers in its own area, not in that folder.</p>
+    <p class="lede">The simulation ends here. This is not the real host. Install Docker or Podman, then open a terminal in the lab pack root, the folder containing <code>start.bat</code> or <code>start.sh</code>, and run these commands. Docker stores the images and containers in its own area, not in that folder.</p>
     <div class="term-window">
       <div class="term-bar">
         <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
@@ -720,7 +720,7 @@
             <span>Settings</span>
           </button>
         </div>
-        <div class="desktop-note">The desktop is a mock. Open the terminal for the real commands.</div>
+        <div class="desktop-note">The desktop is a mock. Open the terminal for the real commands. The launcher is one level above this file, in the lab pack root.</div>
       </div>
       <div class="footer" style="margin-top:16px">
         <button class="btn" id="download-record-3" type="button">Download build record</button>
@@ -906,7 +906,7 @@
       '',
       '## Next step',
       '',
-      'On your machine: install Docker Desktop or Podman, download the lab pack, then run:',
+      'On your machine: install Docker Desktop or Podman, download the lab pack, open a terminal in the lab pack root, then run:',
       '',
       '```bash',
       './start.sh host',
@@ -931,6 +931,7 @@
 
   function terminalCommands() {
     return [
+      '<span class="comment"># Run these from the lab pack root, the folder with start.bat or start.sh.</span>',
       '<span class="comment"># 1. Install Docker Desktop or Podman (see Module 00).</span>',
       '<span class="comment"># 2. Download the lab pack.</span>',
       '<span class="prompt">$</span> <span class="cmd">git clone https://github.com/michael-borck/enterprise-estate-labs.git</span>',

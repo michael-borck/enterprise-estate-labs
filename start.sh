@@ -11,6 +11,7 @@
 #   ./start.sh m06             start the cumulative Module 06 state
 #   ./start.sh m08             start the cumulative Module 08 state (identity)
 #   ./start.sh m09             start the cumulative Module 09 state
+#   ./start.sh m10             start the cumulative Module 10 state (backup and restore)
 #   ./start.sh status          show what is running
 #   ./start.sh console         shell on the tools container
 #   ./start.sh logs [service]  follow logs
@@ -22,13 +23,15 @@
 #   ./start.sh limit <svc> <cpus>
 #   ./start.sh stop            stop, keep volumes
 #   ./start.sh down            remove containers and networks, keep volumes
-#   ./start.sh reset <m03|m05|m06|m08|m09>
+#   ./start.sh reset <m03|m05|m06|m08|m09|m10>
 #   ./start.sh fix-m05
 #   ./start.sh break-m05
 #   ./start.sh fix-m08
 #   ./start.sh break-m08
 #   ./start.sh fix-m09
 #   ./start.sh break-m09
+#   ./start.sh fix-m10
+#   ./start.sh break-m10
 #   ./start.sh smoke
 #   ./start.sh pull
 #   ./start.sh guide           open the install simulation, then the host shell
@@ -76,7 +79,7 @@ else
   COMPOSE=(docker compose)
 fi
 
-ALL_PROFILES=(--profile m03 --profile m05 --profile m06 --profile m08 --profile m09)
+ALL_PROFILES=(--profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10)
 
 usage() {
   cat <<'EOF'
@@ -87,18 +90,21 @@ CloudCore estate launcher
   ./start.sh m06             start the cumulative Module 06 state
   ./start.sh m08             start the cumulative Module 08 state (identity)
   ./start.sh m09             start the cumulative Module 09 state
+  ./start.sh m10             start the cumulative Module 10 state (backup and restore)
   ./start.sh status          show what is running
   ./start.sh console         shell on the tools container
   ./start.sh logs [service]  follow logs
   ./start.sh stop            stop, keep volumes
   ./start.sh down            remove containers and networks, keep volumes
-  ./start.sh reset m03|m05|m06|m08|m09
+  ./start.sh reset m03|m05|m06|m08|m09|m10
   ./start.sh fix-m05         restore the portal DNS record
   ./start.sh break-m05       point the portal name at the wrong address
   ./start.sh fix-m08         restore the reporting service group membership
   ./start.sh break-m08       remove the reporting service from the reporting group
   ./start.sh fix-m09         repair the finance share
   ./start.sh break-m09       put the finance share back into the broken state
+  ./start.sh fix-m10         restore the backup command
+  ./start.sh break-m10       put the backup back into the schema-only fault
   ./start.sh smoke           run the smoke test
   ./start.sh pull            pull the images
   ./start.sh guide           open the install simulation, then the host shell
@@ -122,9 +128,10 @@ state() {
     m06) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 up -d ;;
     m08) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 up -d ;;
     m09) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d ;;
+    m10) "${COMPOSE[@]}" --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10 up -d ;;
     *)
       echo "Unknown state: ${1:-}" >&2
-      echo "Use m03, m05, m06, m08 or m09." >&2
+      echo "Use m03, m05, m06, m08, m09 or m10." >&2
       exit 1
       ;;
   esac
@@ -164,13 +171,14 @@ case "$cmd" in
     usage
     ;;
 
-  m03|m05|m06|m08|m09)
+  m03|m05|m06|m08|m09|m10)
     state "$cmd"
     case "$cmd" in
       m05) echo "Estate is up, including the internal DNS." ;;
       m06) echo "Estate is up. Open https://localhost:8443 (expect a certificate warning)." ;;
       m08) echo "Estate is up, including the identity service." ;;
       m09) echo "Estate is up, including the finance share." ;;
+      m10) echo "Estate is up, including the backup and restore service." ;;
       *)   echo "Estate is up." ;;
     esac
     ;;
@@ -239,8 +247,8 @@ case "$cmd" in
   reset)
     target="${1:-}"
     case "$target" in
-      m03|m05|m06|m08|m09) ;;
-      *) echo "Usage: ./start.sh reset m03|m05|m06|m08|m09" >&2; exit 1 ;;
+      m03|m05|m06|m08|m09|m10) ;;
+      *) echo "Usage: ./start.sh reset m03|m05|m06|m08|m09|m10" >&2; exit 1 ;;
     esac
     "${COMPOSE[@]}" "${ALL_PROFILES[@]}" down -v --remove-orphans
     state "$target"
@@ -273,6 +281,14 @@ case "$cmd" in
     "${COMPOSE[@]}" --profile m09 run --rm --user root writer sh -c \
       'chown root:root /share && chmod 755 /share'
     echo "Finance share returned to the broken state."
+    ;;
+
+  fix-m10)
+    ./scenarios/m10/fix.sh
+    ;;
+
+  break-m10)
+    ./scenarios/m10/break.sh
     ;;
 
   smoke)

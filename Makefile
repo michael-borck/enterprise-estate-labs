@@ -10,10 +10,10 @@ else
 COMPOSE ?= docker compose
 endif
 
-ALL_PROFILES = --profile m03 --profile m05 --profile m06 --profile m08 --profile m09
+ALL_PROFILES = --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 --profile m10
 
-.PHONY: help m03 m05 m06 m08 m09 stop down reset reset-m03 reset-m05 reset-m06 reset-m08 reset-m09 \
-        status logs console smoke pull fix-m05 break-m05 fix-m08 break-m08 fix-m09 break-m09
+.PHONY: help m03 m05 m06 m08 m09 m10 stop down reset reset-m03 reset-m05 reset-m06 reset-m08 reset-m09 reset-m10 \
+        status logs console smoke pull fix-m05 break-m05 fix-m08 break-m08 fix-m09 break-m09 fix-m10 break-m10
 
 help:
 	@echo "Enterprise Estate Labs (staff/advanced)"
@@ -25,6 +25,7 @@ help:
 	@echo "  make m06          Start the cumulative Module 06 state (adds proxy/TLS)"
 	@echo "  make m08          Start the cumulative Module 08 state (adds identity)"
 	@echo "  make m09          Start the cumulative Module 09 state (adds shared volume)"
+	@echo "  make m10          Start the cumulative Module 10 state (adds backup and restore)"
 	@echo "  make console      Shell on the tools container (needs m03 or later)"
 	@echo "  make status       Show running services"
 	@echo "  make logs         Follow logs"
@@ -36,12 +37,15 @@ help:
 	@echo "  make reset-m06    Remove everything and return to the Module 06 state"
 	@echo "  make reset-m08    Remove everything and return to the Module 08 state"
 	@echo "  make reset-m09    Remove everything and return to the Module 09 state"
+	@echo "  make reset-m10    Remove everything and return to the Module 10 state"
 	@echo "  make fix-m05      Restore the Module 05 DNS record"
 	@echo "  make break-m05    Point the Module 05 portal name at the wrong address"
 	@echo "  make fix-m08      Restore the Module 08 reporting group membership"
 	@echo "  make break-m08    Remove the reporting service from the reporting group"
 	@echo "  make fix-m09      Repair the Module 09 share permissions"
 	@echo "  make break-m09    Put the Module 09 share back into the broken state"
+	@echo "  make fix-m10      Restore the Module 10 backup command"
+	@echo "  make break-m10    Put the Module 10 backup back into the schema-only fault"
 	@echo ""
 	@echo "  Podman: make m06 CONTAINER_ENGINE=podman"
 
@@ -59,6 +63,9 @@ m08:
 
 m09:
 	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d
+
+m10:
+	$(COMPOSE) $(ALL_PROFILES) up -d
 
 stop:
 	$(COMPOSE) $(ALL_PROFILES) stop
@@ -83,6 +90,10 @@ reset-m08:
 	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 up -d
 
 reset-m09:
+	$(COMPOSE) $(ALL_PROFILES) down -v --remove-orphans
+	$(COMPOSE) --profile m03 --profile m05 --profile m06 --profile m08 --profile m09 up -d
+
+reset-m10:
 	$(COMPOSE) $(ALL_PROFILES) down -v --remove-orphans
 	$(COMPOSE) $(ALL_PROFILES) up -d
 
@@ -118,3 +129,9 @@ fix-m09:
 
 break-m09:
 	$(COMPOSE) --profile m09 run --rm --user root writer sh -c 'chown root:root /share && chmod 755 /share'
+
+fix-m10:
+	./scenarios/m10/fix.sh
+
+break-m10:
+	./scenarios/m10/break.sh

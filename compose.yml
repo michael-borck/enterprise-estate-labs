@@ -78,6 +78,20 @@ services:
       - caddy-config:/config
     networks: [estate]
 
+  backup:
+    image: postgres:16-alpine
+    profiles: ["m10"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-estate-demo}
+    volumes:
+      - ./estate/backup:/backup:ro
+      - backup-data:/backups
+    networks: [estate]
+    command: ["sleep", "infinity"]
+
   writer:
     image: alpine:3.20
     profiles: ["m09"]
@@ -106,3 +120,4 @@ volumes:
   caddy-data:
   caddy-config:
   share-data:
+  backup-data:

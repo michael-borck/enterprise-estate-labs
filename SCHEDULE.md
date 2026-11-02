@@ -17,7 +17,7 @@ weeks follow the 2026 calendar shape (Weeks 1-7, tuition-free Weeks 8-9, teachin
 | 06 | Protocols and the web tier | 06 | 6 | Reverse proxy, TLS, certificate fault |
 | 08 | Identity and access | 08 | 10 | Users, groups, service accounts, least privilege (`m08`) |
 | 09 | File systems and access control | 09 | 11 | Shared volume, ownership, permission fault |
-| 10 | Storage, virtualisation and cloud | 10 | 12 | Planned |
+| 10 | Storage, virtualisation and cloud | 10 | 12 | Backup and restore, schema-only fault (`m10`) |
 | 11 | Security, privacy and incident response | 11 | 13 | Planned |
 
 The unit's `COVERAGE_MATRIX.md` is the authoritative mapping for assessment. This file

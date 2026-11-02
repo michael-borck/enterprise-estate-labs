@@ -454,6 +454,8 @@
     color: #8fb0c7;
     font-size: 11px;
   }
+  .uefi-changes { margin: 8px 0 0 18px; padding: 0; color: #d8e8f3; font-size: 12px; }
+  .uefi-changes li { margin-bottom: 6px; }
   .boot-menu {
     display: grid; gap: 8px; margin: 14px 0;
   }
@@ -616,12 +618,13 @@
   ];
 
   const state = {
-    bootScreen: 'post',
+    bootScreen: 'hardware',
     biosTab: 'main',
     bootOrder: ['disk', 'iso', 'network'],
     secureBoot: true,
     fastBoot: false,
     installed: false,
+    memory: 2048,
     release: 'ubuntu-24.04',
     hostname: 'cloudcore-host',
     network: 'dhcp',
@@ -926,6 +929,7 @@
       <table class="summary">
         ${summaryRow('Release', releaseLabel())}
         ${summaryRow('Hostname', state.hostname)}
+        ${summaryRow('Memory', `${state.memory} MB`)}
         ${summaryRow('Boot order', state.bootOrder.map(bootName).join(' -> '))}
         ${summaryRow('Secure Boot', state.secureBoot ? 'Enabled' : 'Disabled')}
         ${summaryRow('Network', state.network === 'dhcp' ? 'DHCP' : state.network === 'none' ? 'No network' : `Static ${state.ip}, gateway ${state.gateway}, DNS ${state.dns}`)}
@@ -1103,10 +1107,61 @@
 
   function bootName(device) {
     return {
-      disk: 'UEFI: Virtual disk (20 GB)',
+      disk: `UEFI: Virtual disk (${state.disk} GB)`,
       iso: 'UEFI: Ubuntu Server 24.04 LTS ISO',
       network: 'UEFI: Network boot (PXE)'
     }[device] || device;
+  }
+
+  function hardwareBody() {
+    const warnings = [];
+    if (Number(state.memory) < 2048) warnings.push('1 GB is tight. The host, the runtime and the estate will be slow, and the kernel may run out of memory.');
+    if (Number(state.disk) < 20) warnings.push('10 GB is tight. Updates, logs and container images will fill it quickly.');
+    return `
+      <div class="boot-screen" style="justify-content:flex-start">
+        <div class="post-logo">CLOUDCORE VIRTUAL PLATFORM</div>
+        <div class="post-sub">Virtual hardware &middot; before power on</div>
+        <p>Choose the virtual hardware for the service pod. The real lab host is an Ubuntu container shell; this screen lets you make the sizing decision first.</p>
+        <div class="grid-2" style="margin-top:16px">
+          <label class="choice">
+            <input type="radio" name="memory" data-key="memory" value="1024" ${Number(state.memory) === 1024 ? 'checked' : ''}>
+            <strong>1 GB memory</strong>
+            <span>Tight. The host and the estate will be slow.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="memory" data-key="memory" value="2048" ${Number(state.memory) === 2048 ? 'checked' : ''}>
+            <strong>2 GB memory</strong>
+            <span>Recommended for the service pod.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="memory" data-key="memory" value="4096" ${Number(state.memory) === 4096 ? 'checked' : ''}>
+            <strong>4 GB memory</strong>
+            <span>Roomy. More than this pod needs.</span>
+          </label>
+        </div>
+        <div class="grid-2" style="margin-top:14px">
+          <label class="choice">
+            <input type="radio" name="disk" data-key="disk" value="10" ${Number(state.disk) === 10 ? 'checked' : ''}>
+            <strong>10 GB disk</strong>
+            <span>Tight. Updates and images will fill it.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="disk" data-key="disk" value="20" ${Number(state.disk) === 20 ? 'checked' : ''}>
+            <strong>20 GB disk</strong>
+            <span>Recommended. Room for updates and images.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="disk" data-key="disk" value="40" ${Number(state.disk) === 40 ? 'checked' : ''}>
+            <strong>40 GB disk</strong>
+            <span>Roomy. Useful if you keep many images.</span>
+          </label>
+        </div>
+        ${warnings.length ? `<div class="feedback" style="margin-top:16px">${warnings.map((warning) => `<p class="warn">${esc(warning)}</p>`).join('')}</div>` : ''}
+        <div class="boot-actions">
+          <button class="btn primary" id="power-on" type="button">Power on</button>
+        </div>
+      </div>
+    `;
   }
 
   function postBody() {
@@ -1115,8 +1170,8 @@
         <div class="post-logo">CLOUDCORE VIRTUAL PLATFORM</div>
         <div class="post-sub">UEFI firmware 2.7.1 &middot; service pod 01</div>
         <div class="post-line"><span class="k">CPU</span><span class="v">CloudCore vCPU, 2 cores at 2.4 GHz</span></div>
-        <div class="post-line"><span class="k">Memory</span><span class="v">2048 MB</span></div>
-        <div class="post-line"><span class="k">Storage</span><span class="v">20 GB virtual disk</span></div>
+        <div class="post-line"><span class="k">Memory</span><span class="v">${state.memory} MB</span></div>
+        <div class="post-line"><span class="k">Storage</span><span class="v">${state.disk} GB virtual disk</span></div>
         <div class="post-line"><span class="k">Network</span><span class="v">UEFI PXE over IPv4</span></div>
         <div class="post-line"><span class="k">Secure Boot</span><span class="v">${state.secureBoot ? 'Enabled' : 'Disabled'}</span></div>
         <div class="post-key">
@@ -1134,7 +1189,7 @@
 
   function uefiSide(tab) {
     const sides = {
-      main: ['System information', 'The firmware reports the virtual hardware. These values are read-only in the simulation. The lab host uses 2 GB of memory and a 20 GB disk, which is enough for the service pod.'],
+      main: ['System information', `The firmware reports the virtual hardware. These values are read-only in the simulation. You chose ${state.memory} MB of memory and a ${state.disk} GB disk before boot.`],
       advanced: ['Advanced settings', 'Virtualisation is enabled because the container runtime needs it. Memory, CSM and other advanced settings are fixed for the lab. Click a value marked with an asterisk to see why.'],
       security: ['Security', 'Secure Boot is on by default. The administrator password is not modelled; the real host uses sudo for administrative work.'],
       boot: ['Boot order', 'The firmware tries devices from the top down. The disk is empty before the install, so put the ISO first to install, then put the disk first to boot the installed system.'],
@@ -1144,6 +1199,22 @@
     return `<h4>${esc(title)}</h4><p>${esc(text)}</p><p>Settings marked with <strong>*</strong> are fixed in the simulation.</p>`;
   }
 
+  function uefiChanges() {
+    const changes = [];
+    const defaultOrder = ['disk', 'iso', 'network'];
+    const shortName = (device) => ({ disk: 'Disk', iso: 'ISO', network: 'Network' }[device] || device);
+    if (state.bootOrder.join(',') !== defaultOrder.join(',')) {
+      changes.push(`Boot order: ${state.bootOrder.map(shortName).join(' -> ')} (was ${defaultOrder.map(shortName).join(' -> ')})`);
+    }
+    if (state.secureBoot !== true) {
+      changes.push(`Secure Boot: Enabled to ${state.secureBoot ? 'Enabled' : 'Disabled'}`);
+    }
+    if (state.fastBoot !== false) {
+      changes.push(`Fast boot: Disabled to ${state.fastBoot ? 'Enabled' : 'Disabled'}`);
+    }
+    return changes;
+  }
+
   function uefiPane(tab) {
     if (tab === 'main') {
       return `
@@ -1151,8 +1222,8 @@
         <table class="uefi-table">
           <tr><th>BIOS version</th><td>CloudCore UEFI 2.7.1</td></tr>
           <tr><th>Processor</th><td>CloudCore vCPU, 2 cores at 2.4 GHz</td></tr>
-          <tr><th>Memory</th><td>2048 MB</td></tr>
-          <tr><th>Virtual disk</th><td>20 GB</td></tr>
+          <tr><th>Memory</th><td>${state.memory} MB</td></tr>
+          <tr><th>Virtual disk</th><td>${state.disk} GB</td></tr>
           <tr><th>Boot mode</th><td>UEFI</td></tr>
           <tr><th>Secure Boot</th><td>${state.secureBoot ? 'Enabled' : 'Disabled'}</td></tr>
           <tr><th>System time</th><td>${new Date().toLocaleString()}</td></tr>
@@ -1164,7 +1235,7 @@
         <div class="uefi-title">Advanced</div>
         <table class="uefi-table">
           <tr><th>Virtualisation (VT-x / AMD-V)</th><td>Enabled *</td></tr>
-          <tr><th>Memory configuration</th><td><button class="uefi-value-btn" data-info="memory" type="button">Auto *</button></td></tr>
+          <tr><th>Memory configuration</th><td><button class="uefi-value-btn" data-info="memory" type="button">${state.memory} MB *</button></td></tr>
           <tr><th>CSM / legacy boot</th><td><button class="uefi-value-btn" data-info="csm" type="button">Disabled *</button></td></tr>
           <tr><th>TPM</th><td><button class="uefi-value-btn" data-info="tpm" type="button">Present *</button></td></tr>
           <tr><th>Fast boot</th><td><button class="uefi-value-btn" id="toggle-fast-boot" type="button">${state.fastBoot ? 'Enabled' : 'Disabled'}</button></td></tr>
@@ -1206,6 +1277,7 @@
         </table>
       `;
     }
+    const changes = uefiChanges();
     return `
       <div class="uefi-title">Save &amp; Exit</div>
       <p class="hint">Save the boot order and continue the boot, or restore the defaults.</p>
@@ -1213,7 +1285,11 @@
         <button class="btn primary" id="save-exit" type="button">Save and exit</button>
         <button class="btn" id="load-defaults" type="button">Load defaults</button>
       </div>
-      <p class="hint" style="margin-top:16px">The simulation does not write to real firmware. The boot order is recorded in the build record.</p>
+      <h4 class="uefi-title" style="font-size:12px;margin:20px 0 6px">Changes from defaults</h4>
+      ${changes.length
+        ? `<ul class="uefi-changes">${changes.map((change) => `<li>${esc(change)}</li>`).join('')}</ul>`
+        : '<p class="hint">No changes from the defaults.</p>'}
+      <p class="hint" style="margin-top:16px">The simulation does not write to real firmware. The settings are recorded in the build record.</p>
     `;
   }
 
@@ -1236,7 +1312,7 @@
           <div class="uefi-side">${uefiSide(state.biosTab)}</div>
         </div>
         <div class="uefi-footer">
-          <span>Esc: exit setup &middot; F10: save and exit</span>
+          <span>&larr;/&rarr; tabs &middot; &uarr;/&darr; rows &middot; Enter select &middot; Esc exit &middot; F10 save and exit</span>
           <span>Settings marked * are fixed in the simulation</span>
         </div>
       </div>
@@ -1251,18 +1327,23 @@
         ${state.installed
           ? '<p class="boot-note">Installation complete. The installer ISO is still attached. Select the UEFI disk to boot the installed system.</p>'
           : '<p class="boot-note">The virtual disk is empty. Select the Ubuntu Server ISO to install.</p>'}
+        <p class="hint">Use the arrow keys to move, Enter to select, or click a device.</p>
         <div class="boot-menu">
           <button class="boot-option" data-boot="iso" type="button">
             <strong>UEFI: Ubuntu Server 24.04 LTS ISO</strong>
             <span>The installer. Use this first.</span>
           </button>
           <button class="boot-option" data-boot="disk" type="button">
-            <strong>UEFI: Virtual disk (20 GB)</strong>
+            <strong>UEFI: Virtual disk (${state.disk} GB)</strong>
             <span>${state.installed ? 'Ubuntu is installed here.' : 'Empty. No operating system.'}</span>
           </button>
           <button class="boot-option" data-boot="network" type="button">
             <strong>UEFI: Network boot (PXE)</strong>
             <span>No PXE server in this estate. This will fail.</span>
+          </button>
+          <button class="boot-option" data-boot="unsigned" type="button">
+            <strong>UEFI: Unsigned test bootloader</strong>
+            <span>Demonstration only. Fails when Secure Boot is on.</span>
           </button>
         </div>
         <div class="boot-actions">
@@ -1301,11 +1382,43 @@
     `;
   }
 
+  function secureFailBody() {
+    return `
+      <div class="boot-screen">
+        <div class="post-logo" style="color:#ff8a80">Secure Boot violation</div>
+        <div class="post-sub">Invalid signature detected. The bootloader is not signed by a trusted key.</div>
+        <p>Secure Boot is enabled, so the firmware refused to run the unsigned test bootloader.</p>
+        <p>Open Security in setup to disable Secure Boot, or go back to the boot menu and choose a signed device.</p>
+        <div class="boot-actions">
+          <button class="btn" id="bios-security" type="button">F2: Security settings</button>
+          <button class="btn" id="boot-menu" type="button">F12: Boot Menu</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function unsignedBody() {
+    return `
+      <div class="boot-screen">
+        <div class="post-logo">Unsigned bootloader</div>
+        <div class="post-sub">Secure Boot is disabled. The firmware started the unsigned test image.</div>
+        <p>This is the trade-off. With Secure Boot off, the firmware no longer checks the boot chain. In a real estate, that is a risk.</p>
+        <div class="boot-actions">
+          <button class="btn" id="boot-menu" type="button">F12: Boot Menu</button>
+          <button class="btn" id="bios-security" type="button">F2: Security settings</button>
+        </div>
+      </div>
+    `;
+  }
+
   function bootBody() {
+    if (state.bootScreen === 'hardware') return hardwareBody();
     if (state.bootScreen === 'uefi') return uefiBody();
     if (state.bootScreen === 'bootmenu') return bootMenuBody();
     if (state.bootScreen === 'noBoot') return noBootBody();
     if (state.bootScreen === 'pxe') return pxeBody();
+    if (state.bootScreen === 'secureFail') return secureFailBody();
+    if (state.bootScreen === 'unsigned') return unsignedBody();
     return postBody();
   }
 
@@ -1398,13 +1511,34 @@
       render();
       return;
     }
+    if (device === 'unsigned') {
+      state.bootScreen = state.secureBoot ? 'secureFail' : 'unsigned';
+      render();
+      return;
+    }
     state.bootScreen = 'pxe';
     render();
+  }
+
+  function moveFocus(selector, direction) {
+    const items = Array.from(document.querySelectorAll(`${selector} button:not([disabled])`))
+      .filter((el) => el.offsetParent !== null);
+    if (!items.length) return;
+    const index = items.indexOf(document.activeElement);
+    if (index === -1) {
+      items[0].focus();
+      return;
+    }
+    items[(index + direction + items.length) % items.length].focus();
   }
 
   function setBiosTab(tab) {
     state.biosTab = tab;
     render();
+    requestAnimationFrame(() => {
+      const active = document.querySelector('.uefi-tab.active');
+      if (active) active.focus();
+    });
   }
 
   function moveBoot(index, direction) {
@@ -1453,7 +1587,7 @@
     },
     memory: {
       title: 'Memory configuration',
-      body: '<p>Fixed at 2048 MB for the service pod. That is enough for the host shell and the small container estate.</p><p>On a real server you would size memory from the workload and leave headroom for the kernel and page cache.</p>'
+      body: '<p>Set before power on. The default is 2048 MB for the service pod. That is enough for the host shell and the small container estate.</p><p>On a real server you would size memory from the workload and leave headroom for the kernel and page cache.</p>'
     }
   };
 
@@ -1477,9 +1611,24 @@
   function helpHtml() {
     const id = steps[current].id;
     if (id === 'boot') {
+      if (state.bootScreen === 'hardware') {
+        return helpSection('This screen', '<p>Before power on, choose the virtual hardware for the service pod. The default is 2 GB of memory and a 20 GB disk.</p>')
+          + helpSection('What to do', '<p>Leave the defaults unless you have a reason. 1 GB or 10 GB will be tight for the host, the runtime and the estate.</p>')
+          + helpSection('Simulation notes', '<p>The real lab host is an Ubuntu container shell. This screen is where you make the sizing decision before the firmware starts.</p>');
+      }
+      if (state.bootScreen === 'secureFail') {
+        return helpSection('This screen', '<p>Secure Boot is enabled and the unsigned test bootloader failed the signature check.</p>')
+          + helpSection('What to do', '<p>Open Security in setup and disable Secure Boot, or go back and boot a signed device.</p>')
+          + helpSection('Simulation notes', '<p>The Ubuntu ISO and the installed Ubuntu bootloader are signed. This test entry is deliberately unsigned so you can see the firmware check.</p>');
+      }
+      if (state.bootScreen === 'unsigned') {
+        return helpSection('This screen', '<p>Secure Boot is disabled, so the firmware started the unsigned test image.</p>')
+          + helpSection('What to do', '<p>This is the trade-off. Turn Secure Boot back on in Security unless you have a specific reason.</p>')
+          + helpSection('Simulation notes', '<p>A real estate should not disable Secure Boot to run unsigned code. The check exists for a reason.</p>');
+      }
       if (state.bootScreen === 'uefi') {
         const tabHelp = {
-          main: 'The firmware reports the virtual hardware. These values are read-only. The lab host uses 2 GB of memory and a 20 GB disk, enough for the pod.',
+          main: `The firmware reports ${state.memory} MB of memory and a ${state.disk} GB disk. These values are read-only in the simulation.`,
           advanced: 'Virtualisation is on because the container runtime needs it. Memory, CSM and other advanced settings are fixed for the lab. Click the values marked with an asterisk to see why.',
           security: 'Secure Boot is on. The administrator password is not modelled. The real host uses sudo for administrative work.',
           boot: 'The firmware tries devices from the top down. The disk is empty before the install. Put the ISO first to install, then put the disk first to boot the installed system.',
@@ -1504,7 +1653,7 @@
       }
       return helpSection('This screen', '<p>This is the firmware boot screen. The disk is empty, so the default boot order will fail until you install or change the order.</p>')
         + helpSection('What to do', '<p>Press <strong>F2</strong> for setup, <strong>F12</strong> for the boot menu, or wait for the countdown. The buttons do the same thing if the function keys do not reach the browser.</p>')
-        + helpSection('Simulation notes', '<p>The CPU, memory and disk are fixed for the lab. The real host is an Ubuntu container shell, not a virtual machine.</p>');
+        + helpSection('Simulation notes', `<p>The CPU is fixed. You chose ${state.memory} MB of memory and a ${state.disk} GB disk before power on. The real host is an Ubuntu container shell, not a virtual machine.</p>`);
     }
     const help = {
       release: ['Choose the release. 24.04 LTS is the long-term default.', 'Use Ubuntu Server 24.04 LTS. It is the long-term release and it matches the real lab host.', 'A newer interim release has a short support window. An older LTS is still supported but not the default.'],
@@ -1551,16 +1700,25 @@
     const bar = $('progress-bar');
     const label = $('progress-label');
     if (!log || !bar || !label) return;
+    const rootSize = state.storage === 'guided'
+      ? Number(state.disk) - EFI_SIZE - Number(state.swap)
+      : Number(state.rootSize);
     const lines = [
-      'Reading partition table...',
-      'Creating EFI system partition...',
-      'Creating ext4 root file system...',
+      `Creating GPT partition table on /dev/vda (${state.disk} GB)...`,
+      `Creating EFI system partition (${EFI_SIZE} GB)...`,
+      state.storage === 'guided'
+        ? `Creating ext4 root file system (${rootSize} GB)...`
+        : `Creating ext4 root partition (${rootSize} GB)...`,
+      Number(state.swap) > 0 ? `Creating swap (${state.swap} GB)...` : 'Skipping swap...',
+      'Mounting /target...',
       'Installing base system...',
       state.network === 'none' ? 'Skipping network configuration...' : 'Configuring network...',
       `Creating user ${state.username}...`,
       state.ssh ? 'Installing OpenSSH server...' : 'Skipping OpenSSH server...',
       state.network === 'none' ? 'Skipping package updates (no network)...' : 'Installing standard packages...',
+      'Installing kernel...',
       'Installing GRUB to the EFI system partition...',
+      state.secureBoot ? 'Configuring Secure Boot chain...' : 'Secure Boot disabled: boot chain not verified...',
       'Finishing...'
     ];
     let lineIndex = 0;
@@ -1604,6 +1762,7 @@
       '',
       `- Release: ${releaseLabel()}`,
       `- Hostname: ${state.hostname}`,
+      `- Memory: ${state.memory} MB`,
       `- Boot order: ${state.bootOrder.map(bootName).join(' -> ')}`,
       `- Secure Boot: ${state.secureBoot ? 'Enabled' : 'Disabled'}`,
       `- Installed from: ${releaseLabel()} ISO (simulated)`,
@@ -1721,12 +1880,13 @@
     closeInfo();
     closeTerminal();
     Object.assign(state, {
-      bootScreen: 'post',
+      bootScreen: 'hardware',
       biosTab: 'main',
       bootOrder: ['disk', 'iso', 'network'],
       secureBoot: true,
       fastBoot: false,
       installed: false,
+      memory: 2048,
       release: 'ubuntu-24.04',
       hostname: 'cloudcore-host',
       network: 'dhcp',
@@ -1776,7 +1936,9 @@
     if (!key) return;
     if (event.target.type === 'radio' || event.target.type === 'checkbox') {
       state[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-      if (key === 'network' || key === 'storage') {
+      if (steps[current].id === 'boot' && state.bootScreen === 'hardware' && (key === 'memory' || key === 'disk')) {
+        render();
+      } else if (key === 'network' || key === 'storage') {
         render();
       } else {
         updateFeedback();
@@ -1795,7 +1957,9 @@
     if (bootBtn) { selectBoot(bootBtn.dataset.boot); return; }
     const infoBtn = target.closest('[data-info]');
     if (infoBtn) { showInfo(infoBtn.dataset.info); return; }
+    if (target.closest('#power-on')) { state.bootScreen = 'post'; render(); return; }
     if (target.closest('#bios-enter')) { openUefi('main'); return; }
+    if (target.closest('#bios-security')) { openUefi('security'); return; }
     if (target.closest('#boot-menu')) { openBootMenu(); return; }
     if (target.closest('#boot-continue')) { continueBoot(); return; }
     if (target.closest('#boot-post')) { clearBootTimer(); state.bootScreen = 'post'; render(); return; }
@@ -1833,41 +1997,64 @@
   });
 
   document.addEventListener('keydown', (event) => {
+    const overlayOpen = $('terminal-modal').classList.contains('open')
+      || $('info-modal').classList.contains('open')
+      || helpPanel.classList.contains('open');
     if (event.key === 'Escape') {
-      const overlayOpen = $('terminal-modal').classList.contains('open')
-        || $('info-modal').classList.contains('open')
-        || helpPanel.classList.contains('open');
       closeTerminal();
       closeInfo();
       closeHelp();
       if (overlayOpen) return;
     }
-    if (steps[current].id === 'boot') {
-      if (event.key === 'F2') {
+    if (overlayOpen) return;
+    if (steps[current].id !== 'boot') return;
+    if (state.bootScreen === 'hardware') return;
+    if (event.key === 'F2') {
+      event.preventDefault();
+      openUefi('main');
+      return;
+    }
+    if (event.key === 'F12') {
+      event.preventDefault();
+      openBootMenu();
+      return;
+    }
+    if (event.key === 'F10' && state.bootScreen === 'uefi') {
+      event.preventDefault();
+      saveAndExit();
+      return;
+    }
+    if (event.key === 'Enter' && state.bootScreen === 'post') {
+      event.preventDefault();
+      continueBoot();
+      return;
+    }
+    if (event.key === 'Escape' && (state.bootScreen === 'uefi' || state.bootScreen === 'bootmenu')) {
+      event.preventDefault();
+      clearBootTimer();
+      state.bootScreen = 'post';
+      render();
+      return;
+    }
+    if (state.bootScreen === 'uefi') {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
-        openUefi('main');
+        const tabs = ['main', 'advanced', 'security', 'boot', 'exit'];
+        const index = tabs.indexOf(state.biosTab);
+        const next = (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        setBiosTab(tabs[next]);
         return;
       }
-      if (event.key === 'F12') {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
-        openBootMenu();
+        moveFocus('.uefi-pane', event.key === 'ArrowDown' ? 1 : -1);
         return;
       }
-      if (event.key === 'F10' && state.bootScreen === 'uefi') {
+    }
+    if (state.bootScreen === 'bootmenu') {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
-        saveAndExit();
-        return;
-      }
-      if (event.key === 'Enter' && state.bootScreen === 'post') {
-        event.preventDefault();
-        continueBoot();
-        return;
-      }
-      if (event.key === 'Escape' && (state.bootScreen === 'uefi' || state.bootScreen === 'bootmenu')) {
-        event.preventDefault();
-        clearBootTimer();
-        state.bootScreen = 'post';
-        render();
+        moveFocus('.boot-screen', event.key === 'ArrowDown' ? 1 : -1);
       }
     }
   });
